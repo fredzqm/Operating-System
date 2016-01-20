@@ -11,26 +11,34 @@ void handleInterrupt21(int, int, int, int);
 
 int main() {
   char* chars[80];
-  char* buffer[80];
+  char* buffer[512];
   char* line[80];
 
   /* Test printString */
-  /* printString("Hello World!\0"); */
+  printString("Hello World!\0");
+  printString("\r\n\0");
 
   /* Test readString */
-  /* readString(chars);
-  printString(chars); */
-
-  /* Add more space */
-  /* printString("\r\n"); */
+  printString("Please enter your string: \0");
+  readString(chars);
+  printString("\r\n\0");
+  printString(chars);
+  printString("\r\n\0");
 
   /* Test readSector */
-  /*readSector(buffer, 30);
-  printString(buffer);*/
+  readSector(buffer, 30);
+  printString(buffer);
+  printString("\r\n\0");
 
+  /* Test 0x21 Interrupt */
   makeInterrupt21();
+  printString("Please enter your string: \0");
   interrupt(0x21,1,line,0,0);
+  printString("\r\n\0");
   interrupt(0x21,0,line,0,0);
+
+  printString("\r\n\0");
+  printString("That's it. Thank you for running it.\0");
 
   while (1) {}
 }
@@ -114,7 +122,6 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   } else {
     printString("Error!!!!!");
   }
-
 }
 
 
