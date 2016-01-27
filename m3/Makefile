@@ -1,4 +1,4 @@
-all: bootload kernel loadfile
+all: bootload kernel loadFile
 
 kernel.o: kernel.c
 	bcc -ansi -c kernel.c -o kernel.o
@@ -9,14 +9,14 @@ kernel_asm.o: kernel.asm
 kernel:kernel.o kernel_asm.o
 	ld86 -o kernel -d kernel.o kernel_asm.o
 
-loadfile: loadfile.c
+loadFile: loadFile.c
 	gcc -o loadFile loadFile.c
 
 bootload: bootload.asm
 	nasm bootload.asm
 
 clean:
-	rm -rf *.o kernel bootload loadfile
+	rm -rf *.o kernel bootload loadFile
 
 run:
 	dd if=/dev/zero of=floppya.img bs=512 count=2880

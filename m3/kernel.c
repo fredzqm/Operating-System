@@ -16,7 +16,7 @@ int main() {
   char line[512];
 
   /* Test printString */
-  printString("Hello World!\r\n\0");
+  // printString("Hello World!\r\n\0");
 
   /* Test readString */
   // printString("Enter a line: \0");
@@ -150,7 +150,7 @@ void readFile(char *filename, char *buffer) {
   }
 
   // printString(&buffer);
-  while (directoryBuffer[sectorPointer] != 0) {
+  while (directoryBuffer[sectorPointer] != 0x0) {
     readSector(&buffer, directoryBuffer[sectorPointer]);
     // printString(&buffer);
     buffer += 512;
