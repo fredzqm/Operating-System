@@ -54,7 +54,7 @@ int main() {
   // interrupt(0x21, 4, "tstpr2\0", 0x2000, 0);
 
   /* Milestone 3 - shell */
-  interrupt(0x21, 4, shell, 0x2000, 0);
+  // interrupt(0x21, 4, shell, 0x2000, 0);
 
   // while (1) {}
 }
@@ -176,12 +176,11 @@ void readFile(char *filename, char *buffer) {
 
 void executeProgram(char* name, int segment) {
   char programBuffer[13312];
-  int programPointer = 0;
+  int programPointer;
   readFile(name, programBuffer);
   /* '\3' means end of text. could be a bug. */
-  while (programBuffer[programPointer] != '\0') {
+  for (programPointer = 0; programPointer <= 13312; programPointer++) {
     putInMemory(segment, programPointer, programBuffer[programPointer]);
-    programPointer++;
   }
   launchProgram(segment);
 }

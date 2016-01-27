@@ -37,13 +37,13 @@ int main() {
 
   while (1) {
     interrupt(0x21, 0, prompt, 0, 0);
-    // interrupt(0x21, 1, buffer, 0, 0);
-    // interrupt(0x21, 0, buffer, 0, 0);
+    interrupt(0x21, 1, buffer, 0, 0);
+    interrupt(0x21, 0, buffer, 0, 0);
 
-    // handleInput(buffer);
+    handleInput(buffer);
 
-    // interrupt(0x21, 0, badCommand, 0, 0);
-    // interrupt(0x21, 0, newLine, 0, 0);
+    interrupt(0x21, 0, badCommand, 0, 0);
+    interrupt(0x21, 0, newLine, 0, 0);
 
     interrupt(0x21, 5, 0, 0, 0);
   }
@@ -76,17 +76,17 @@ void handleInput(char *input) {
     pointer++;
   }
 
-
+  interrupt(0x21, 0, commandName, 0, 0);
   if (compareStr(commandName, commandType)) {
-    // interrupt(0x21, 3, arg, buf, 0);
-    // interrupt(0x21, 0, buf, 0, 0);
+    interrupt(0x21, 3, arg, buf, 0);
+    interrupt(0x21, 0, buf, 0, 0);
   }
 
 }
 
 int compareStr(char *a, char *b) {
   while(*a == *b) {
-    if (*a == '\0') {
+    if (*a == '\0' || *a == '\3' || *a == '\r' || *a == '\n') {
       return 1;
     }
     a++;
