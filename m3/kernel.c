@@ -37,7 +37,7 @@ int main() {
 
   /* Milestone 3 - readFile */
   interrupt(0x21, 3, "messag\0", buffer, 0);  /* read the file into buffer */
-  interrupt(0x21, 0, buffer, 0, 0);     /* print out the file */
+  // interrupt(0x21, 0, buffer, 0, 0);     /* print out the file */
 
   while (1) {}
 }
@@ -117,8 +117,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     readSector(bx, cx);
   } else if (ax == 3) {
     readFile(bx, cx);
-    printString("HIT");
-    printString(cx);
+    // printString("HIT");
   } else {
     printString("Error!!!!!");
   }
@@ -135,7 +134,7 @@ void readFile(char *filename, char *buffer) {
   for (i = 0; i < 16; i++) {
     int match = 1;
     for (j = 0; j < 6; j++){
-      if (directoryBuffer[i*32 + j ] != filename[j]){
+      if (directoryBuffer[i*32 + j] != filename[j]){
         match = 0;
         break;
       }
@@ -150,9 +149,12 @@ void readFile(char *filename, char *buffer) {
     return;
   }
 
+  // printString(&buffer);
   while (directoryBuffer[sectorPointer] != 0) {
     readSector(&buffer, directoryBuffer[sectorPointer]);
+    // printString(&buffer);
     buffer += 512;
     sectorPointer++;
   }
+  printString(&buffer);
 }
