@@ -9,37 +9,54 @@ int mod(int a, int b);
 int div(int a, int b);
 void handleInterrupt21(int, int, int, int);
 void readFile(char *filename, char *buffer);
+void executeProgram(char* name, int segment);
+void terminate();
 
 int main() {
   char chars[512];
   char buffer[13312];
   char line[512];
+  char shell[6];
+
+  shell[0] = 's';
+  shell[1] = 'h';
+  shell[2] = 'e';
+  shell[3] = 'l';
+  shell[4] = 'l';
+  shell[5] = '\0';
 
   /* Test printString */
-  // printString("Hello World!\r\n\0");
+  /* printString("Hello World!\r\n\0"); */
 
   /* Test readString */
-  // printString("Enter a line: \0");
-  // readString(line);
-  // printString(line);
+  /* printString("Enter a line: \0"); */
+  /* readString(line); */
+  /* printString(line); */
 
   /* Add more space */
   /* printString("\r\n"); */
 
   /* Test readSector */
-  // readSector(buffer, 30);
-  // printString(buffer);
+  /* readSector(buffer, 30); */
+  /* printString(buffer); */
 
   /* Interrupt*/
   makeInterrupt21();
-  // interrupt(0x21, 1, line, 0, 0);
-  // interrupt(0x21, 0, line, 0, 0);
+  /* interrupt(0x21, 1, line, 0, 0); */
+  /* interrupt(0x21, 0, line, 0, 0); */
 
   /* Milestone 3 - readFile */
-  interrupt(0x21, 3, "messag\0", buffer, 0);  /* read the file into buffer */
-  // interrupt(0x21, 0, buffer, 0, 0);     /* print out the file */
+  /* interrupt(0x21, 3, "messag\0", buffer, 0); */ /* read the file into buffer */
+  /*interrupt(0x21, 0, buffer, 0, 0); */   /* print out the file */
 
-  while (1) {}
+  /* Milestone 3 - executeProgram */
+  // interrupt(0x21, 4, "tstprg\0", 0x2000, 0);
+  // interrupt(0x21, 4, "tstpr2\0", 0x2000, 0);
+
+  /* Milestone 3 - shell */
+  interrupt(0x21, 4, shell, 0x2000, 0);
+
+  // while (1) {}
 }
 
 void printString(char *chars) {
@@ -117,15 +134,16 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     readSector(bx, cx);
   } else if (ax == 3) {
     readFile(bx, cx);
-    // printString("HIT");
+  } else if (ax == 4) {
+    executeProgram(bx, cx);
+  } else if (ax == 5) {
+    terminate();
   } else {
     printString("Error!!!!!");
   }
 }
 
 void readFile(char *filename, char *buffer) {
-  int sector = 0;
-
   int i, j;
   char directoryBuffer[512];
   int sectorPointer = 0;
@@ -149,12 +167,32 @@ void readFile(char *filename, char *buffer) {
     return;
   }
 
-  // printString(&buffer);
-  while (directoryBuffer[sectorPointer] != 0x0) {
-    readSector(&buffer, directoryBuffer[sectorPointer]);
-    // printString(&buffer);
+  while (directoryBuffer[sectorPointer] != 0) {
+    readSector(buffer, directoryBuffer[sectorPointer]);
     buffer += 512;
     sectorPointer++;
   }
-  printString(&buffer);
+}
+
+void executeProgram(char* name, int segment) {
+  char programBuffer[13312];
+  int programPointer = 0;
+  readFile(name, programBuffer);
+  /* '\3' means end of text. could be a bug. */
+  while (programBuffer[programPointer] != '\0') {
+    putInMemory(segment, programPointer, programBuffer[programPointer]);
+    programPointer++;
+  }
+  launchProgram(segment);
+}
+
+void terminate() {
+  char shell[6];
+  shell[0] = 's';
+  shell[1] = 'h';
+  shell[2] = 'e';
+  shell[3] = 'l';
+  shell[4] = 'l';
+  shell[5] = '\0';
+  interrupt(0x21, 4, shell, 0x2000, 0);
 }
