@@ -25,7 +25,7 @@ bootload: bootload.asm
 	nasm bootload.asm
 
 clean:
-	rm -rf *.o kernel bootload shell loadFile
+	rm -rf *.o kernel bootload shell loadFile floppya.img
 
 run:
 	dd if=/dev/zero of=floppya.img bs=512 count=2880
