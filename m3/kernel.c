@@ -50,13 +50,12 @@ int main() {
   /*interrupt(0x21, 0, buffer, 0, 0); */   /* print out the file */
 
   /* Milestone 3 - executeProgram */
-  // interrupt(0x21, 4, "tstprg\0", 0x2000, 0);
-  // interrupt(0x21, 4, "tstpr2\0", 0x2000, 0);
+  /* interrupt(0x21, 4, "tstprg\0", 0x2000, 0); */
+  /* interrupt(0x21, 4, "tstpr2\0", 0x2000, 0); */
 
   /* Milestone 3 - shell */
-  // interrupt(0x21, 4, shell, 0x2000, 0);
+  interrupt(0x21, 4, shell, 0x2000, 0);
 
-  // while (1) {}
 }
 
 void printString(char *chars) {
@@ -164,6 +163,7 @@ void readFile(char *filename, char *buffer) {
   }
 
   if (sectorPointer == 0) {
+    *buffer = '\0';
     return;
   }
 

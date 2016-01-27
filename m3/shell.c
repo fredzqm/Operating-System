@@ -8,7 +8,6 @@ int compareStr(char *a, char *b);
 
 int main() {
   char prompt[4];
-  char badCommand[13];
   char buffer[512];
   char newLine[3];
 
@@ -16,6 +15,33 @@ int main() {
   prompt[1] = ':';
   prompt[2] = '>';
   prompt[3] = '\0';
+
+
+  newLine[0] = '\r';
+  newLine[1] = '\n';
+  newLine[2] = '\0';
+
+  while (1) {
+    interrupt(0x21, 0, prompt, 0, 0);
+    interrupt(0x21, 1, buffer, 0, 0);
+    interrupt(0x21, 0, buffer, 0, 0);
+
+    handleInput(buffer);
+
+    interrupt(0x21, 0, newLine, 0, 0);
+
+    interrupt(0x21, 5, 0, 0, 0);
+  }
+}
+
+void handleInput(char *input) {
+  char buf[13312];
+  char commandName[512];
+  char commandArg[512];
+  char commandType[5];
+  char commandExecute[8];
+  char badCommand[13];
+  int pointer = 0;
 
   badCommand[0] = 'B';
   badCommand[1] = 'a';
@@ -31,66 +57,58 @@ int main() {
   badCommand[11] = '!';
   badCommand[12] = '\0';
 
-  newLine[0] = '\r';
-  newLine[1] = '\n';
-  newLine[2] = '\0';
-
-  while (1) {
-    interrupt(0x21, 0, prompt, 0, 0);
-    interrupt(0x21, 1, buffer, 0, 0);
-    interrupt(0x21, 0, buffer, 0, 0);
-
-    handleInput(buffer);
-
-    interrupt(0x21, 0, badCommand, 0, 0);
-    interrupt(0x21, 0, newLine, 0, 0);
-
-    interrupt(0x21, 5, 0, 0, 0);
-  }
-}
-
-void handleInput(char *input) {
-  char buf[13312];
-  char commandType[5];
-  char commandName[512];
-  char arg[512];
-  int pointer = 0;
-
   commandType[0] = 't';
   commandType[1] = 'y';
   commandType[2] = 'p';
   commandType[3] = 'e';
   commandType[4] = '\0';
 
-  while (*input != ' ' && *input != '\0') {
+  commandExecute[0] = 'e';
+  commandExecute[1] = 'x';
+  commandExecute[2] = 'e';
+  commandExecute[3] = 'c';
+  commandExecute[4] = 'u';
+  commandExecute[5] = 't';
+  commandExecute[6] = 'e';
+  commandExecute[7] = '\0';
+
+  while (*input != ' ' && *input != '\r' && *input != '\n' && *input != '\0') {
     commandName[pointer] = *input;
     input++;
     pointer++;
   }
   commandName[pointer] = '\0';
 
+  input++;
   pointer = 0;
-  while (*input != '\0') {
-    arg[pointer] = *input;
+  while (*input != '\r' && *input != '\n' && *input != '\0') {
+    commandArg[pointer] = *input;
     input++;
     pointer++;
   }
+  commandArg[pointer] = '\0';
 
-  interrupt(0x21, 0, commandName, 0, 0);
-  if (compareStr(commandName, commandType)) {
-    interrupt(0x21, 3, arg, buf, 0);
+  if (compareStr(commandName, commandType) == 1) {
+    interrupt(0x21, 3, commandArg, buf, 0);
     interrupt(0x21, 0, buf, 0, 0);
+  } else if (compareStr(commandName, commandExecute) == 1) {
+    interrupt(0x21, 4, commandArg, 0x2000, 0);
+  } else {
+    interrupt(0x21, 0, badCommand, 0, 0);
   }
 
 }
 
 int compareStr(char *a, char *b) {
-  while(*a == *b) {
-    if (*a == '\0' || *a == '\3' || *a == '\r' || *a == '\n') {
-      return 1;
+  while (1) {
+    if (*a != *b) {
+      return 0;
+    }
+    if (*a == '\0' || *a == '\r' || *a == '\n') {
+      break;
     }
     a++;
     b++;
   }
-  return 0;
+  return 1;
 }
