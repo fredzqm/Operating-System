@@ -38,6 +38,7 @@ void handleInput(char *input) {
   char commandName[512];
   char commandArg[512];
   char commandType[5];
+  char commandDelete[7];
   char commandExecute[8];
   char badCommand[13];
   int pointer = 0;
@@ -71,6 +72,14 @@ void handleInput(char *input) {
   commandExecute[6] = 'e';
   commandExecute[7] = '\0';
 
+  commandDelete[0] = 'd';
+  commandDelete[1] = 'e';
+  commandDelete[2] = 'l';
+  commandDelete[3] = 'e';
+  commandDelete[4] = 't';
+  commandDelete[5] = 'e';
+  commandDelete[6] = '\0';
+
   while (*input != ' ' && *input != '\r' && *input != '\n' && *input != '\0') {
     commandName[pointer] = *input;
     input++;
@@ -92,6 +101,8 @@ void handleInput(char *input) {
     interrupt(0x21, 0, buf, 0, 0);
   } else if (compareStr(commandName, commandExecute) == 1) {
     interrupt(0x21, 4, commandArg, 0x2000, 0);
+  } else if (compareStr(commandName, commandDelete) == 1) {
+    interrupt(0x21, 6, commandArg, 0, 0);
   } else {
     interrupt(0x21, 0, badCommand, 0, 0);
   }

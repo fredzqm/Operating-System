@@ -5,12 +5,14 @@
 void printString(char *chars);
 void readString(char *chars);
 void readSector(char *chars, int);
+void writeSector(char *chars, int);
 int mod(int a, int b);
 int div(int a, int b);
 void handleInterrupt21(int, int, int, int);
 void readFile(char *filename, char *buffer);
 void executeProgram(char* name, int segment);
 void terminate();
+void deleteFile(char* name);
 
 int main() {
   char chars[512];
@@ -140,6 +142,10 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     executeProgram(bx, cx);
   } else if (ax == 5) {
     terminate();
+  } else if (ax == 6) {
+    writeSector(bx, cx);
+  } else if (ax == 7) {
+    deleteFile(bx);
   } else {
     printString("Error!!!!!");
   }
@@ -197,4 +203,52 @@ void terminate() {
   shell[4] = 'l';
   shell[5] = '\0';
   interrupt(0x21, 4, shell, 0x2000, 0);
+}
+
+void writeSector(char *chars, int sector) {
+  int ah = 3;
+  int al = 1;
+  int bx = chars;
+  int ch = div(sector, 36);
+  int cl = mod(sector, 18) + 1;
+  int dh = mod(div(sector, 18), 2);
+  int dl = 0;
+
+  int ax = ah * 256 + al;
+  int cx = ch * 256 + cl;
+  int dx = dh * 256 + dl;
+
+  interrupt(0x13, ax, bx, cx, dx);
+}
+
+void deleteFile(char* name) {
+  int i, j;
+  char directoryBuffer[512];
+  char mapBuffer[512];
+  int sectorPointer = 0;
+  readSector(&directoryBuffer, 2);
+  readSector(&mapBuffer, 1);
+
+  for (i = 0; i < 16; i++) {
+    int match = 1;
+    for (j = 0; j < 6; j++){
+      if (directoryBuffer[i*32 + j] != name[j]){
+        match = 0;
+        break;
+      }
+    }
+    if (match) {
+      sectorPointer = i*32+j;
+      directoryBuffer[i*32] = 0x00;
+      break;
+    }
+  }
+
+  writeSector(&directoryBuffer, 2);
+
+  while (directoryBuffer[sectorPointer] != 0 && sectorPointer < i*32) {
+    mapBuffer[directoryBuffer[sectorPointer]] = 0x00;
+    sectorPointer++;
+  }
+  writeSector(&mapBuffer, 1);
 }
