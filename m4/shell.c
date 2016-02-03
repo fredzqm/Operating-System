@@ -131,12 +131,12 @@ void handleInput(char *input) {
   } else if (compareStr(commandName, commandCreate) == 1) {
     int count = 0;
     int readStringSize = 0;
-    interrupt(0x21, 0, promptLine, 0);
+    interrupt(0x21, 0, promptLine, 0, 0);
     interrupt(0x21, 1, buf + count, &readStringSize, 0);
     while(readStringSize != 0) {
       count += readStringSize + 2;
-      interrupt(0x21, 0, newLine, 0);
-      interrupt(0x21, 0, promptLine, 0);
+      interrupt(0x21, 0, newLine, 0, 0);
+      interrupt(0x21, 0, promptLine, 0, 0);
       interrupt(0x21, 1, buf + count, &readStringSize, 0);
     }
     buf[count - 2] = '\0';
@@ -150,12 +150,14 @@ void handleInput(char *input) {
       arg1[ptr] = commandArg[ptr];
       ptr++;
     }
+    arg1[ptr] = '\0';
     ptr++;
     while(commandArg[ptr] != '\0') {
       arg2[ptrArg2] = commandArg[ptr];
       ptr++;
       ptrArg2++;
     }
+    arg2[ptrArg2] = '\0';
     copyFile(arg1, arg2);
   } else {
     interrupt(0x21, 0, badCommand, 0, 0);
@@ -179,14 +181,15 @@ int compareStr(char *a, char *b) {
 
 void copyFile(char* filename1, char* filename2) {
   char buffer[13312];
-  interrupt(0x21, 4, filename1, buffer);
-  interrupt(0x21, 8, filename2, buffer, sizeOfSector(filename1));
+  int sizeOfSec = sizeOfSector(filename1);
+  interrupt(0x21, 3, filename1, buffer);
+  interrupt(0x21, 8, filename2, buffer, sizeOfSec);
 }
 
 int sizeOfSector(char* filename) {
     char buffer[13312];
     int i = 0;
-    interrupt(0x21, 4, filename, buffer);
+    interrupt(0x21, 3, filename, buffer);
     while(buffer[i] != '\0') {
       i++;
     }
