@@ -28,20 +28,21 @@ int main() {
     interrupt(0x21, 0, newLine, 0, 0);
     handleInput(buffer);
     interrupt(0x21, 0, newLine, 0, 0);
-
     interrupt(0x21, 5, 0, 0, 0);
   }
 }
 
 void handleInput(char *input) {
   char buf[13312];
+  char* bufPointer = buf;
   char commandName[512];
   char commandArg[512];
   char commandType[5];
   char commandDelete[7];
   char commandExecute[8];
+  char commandCreate[7];
   char badCommand[13];
-  int pointer = 0;
+  int pointer = 0;buf
 
   badCommand[0] = 'B';
   badCommand[1] = 'a';
@@ -80,6 +81,16 @@ void handleInput(char *input) {
   commandDelete[5] = 'e';
   commandDelete[6] = '\0';
 
+  commandCreate[0] = 'c';
+  commandCreate[1] = 'r';
+  commandCreate[2] = 'e';
+  commandCreate[3] = 'a';
+  commandCreate[4] = 't';
+  commandCreate[5] = 'e';
+  commandCreate[6] = '\0';
+
+
+
   while (*input != ' ' && *input != '\r' && *input != '\n' && *input != '\0') {
     commandName[pointer] = *input;
     input++;
@@ -102,8 +113,14 @@ void handleInput(char *input) {
   } else if (compareStr(commandName, commandExecute) == 1) {
     interrupt(0x21, 4, commandArg, 0x2000, 0);
   } else if (compareStr(commandName, commandDelete) == 1) {
-    interrupt(0x21, 6, commandArg, 0, 0);
-  } else {
+    interrupt(0x21, 7, commandArg, 0, 0);
+  } else if (compareStr(commandName, commandCreate) == 1) {
+    int readStringSize = 0;
+    while(buffer) {
+      
+    }
+    interrupt(0x21, 8, commandArg, 0, 0);
+  }else {
     interrupt(0x21, 0, badCommand, 0, 0);
   }
 
