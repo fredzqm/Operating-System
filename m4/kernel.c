@@ -163,7 +163,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   errorMsg[6] = '!';
   errorMsg[7] = '\0';
 
-  if (ax == 0) {
+  if (ax == 0) { // printString
     printString(bx);
   } else if (ax == 1) {
     if (cx == 0) {
@@ -304,6 +304,18 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
   char mapBuffer[512];
   char sectorPointers[26];
   char errorMessage[10];
+  // char debug[3];
+  errorMessage[0] = 'F';
+  errorMessage[1] = 'i';
+  errorMessage[2] = 'l';
+  errorMessage[3] = 'e';
+  errorMessage[4] = ' ';
+  errorMessage[5] = 'f';
+  errorMessage[6] = 'u';
+  errorMessage[7] = 'l';
+  errorMessage[8] = 'l';
+  errorMessage[9] = '\0';
+
   readSector(directoryBuffer, 2);
   readSector(mapBuffer, 1);
 
@@ -312,21 +324,12 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     while(mapBuffer[i]!=0x00) {
       i++;
       if (i > 2880){
-        errorMessage[0] = 'D';
-        errorMessage[1] = 'i';
-        errorMessage[2] = 's';
-        errorMessage[3] = 'k';
-        errorMessage[4] = ' ';
-        errorMessage[5] = 'f';
-        errorMessage[6] = 'u';
-        errorMessage[7] = 'l';
-        errorMessage[8] = 'l';
-        errorMessage[9] = '\0';
         printString(errorMessage);
         return;
       }
     }
     sectorPointers[j] = i;
+    i++;
   }
 
   i = 0;
@@ -335,16 +338,6 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
   }
 
   if (i > 512) {
-    errorMessage[0] = 'F';
-    errorMessage[1] = 'i';
-    errorMessage[2] = 'l';
-    errorMessage[3] = 'e';
-    errorMessage[4] = ' ';
-    errorMessage[5] = 'f';
-    errorMessage[6] = 'u';
-    errorMessage[7] = 'l';
-    errorMessage[8] = 'l';
-    errorMessage[9] = '\0';
     printString(errorMessage);
     return;
   }
@@ -361,11 +354,14 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     }
   }
 
+  // debug[0] = 48 + numberOfSectors;
+  // debug[1] = 's';
+  // debug[2] = '\0';
+  // printString(debug);
   for (j = 0; j < numberOfSectors; j++) {
     mapBuffer[sectorPointers[j]] = 0xFF;
     directoryBuffer[i+j+6] = sectorPointers[j];
     writeSector(buffer, sectorPointers[j]);
-    printString(errorMessage);
     buffer += 512;
   }
 

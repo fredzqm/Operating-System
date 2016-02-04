@@ -15,7 +15,7 @@ make shell -- create shell
 ========= What we did =========
 --------- Milestone 3 ---------
 Here's what we did for Milestone 3:
-  * Added the following functions in kernel.c and make it work:
+  * Added the following functions in kernel.c and made it work:
     void readFile(char *filename, char *buffer);
     void executeProgram(char* name, int segment);
     void terminate();
@@ -32,3 +32,33 @@ Now do the following:
   * Input "type messag", it should print the contents in message.txt
   * Input "execute tstpr2", it should execute the tstpr2
   * Input "execute tstprg", it should execute the tstprg and hang forever
+
+--------- Milestone 4 ---------
+Here's what we did for Milestone 4:
+  * Added the following functions in kernel.c and made them work:
+    void writeFile(char* name, char* buffer, int numberOfSectors);
+    void deleteFile(char* name);
+  * Added the following 0x21 interrupts
+    ax = 6: Write to sector
+    ax = 7: Delete file
+    ax = 8: Write file
+  * Added functions in shell.c and made them work.
+To verify the functions in shell.c, first build the executables according to the "Usage" section.
+After you run `make run`, you should see the prompt.
+Now do the following:
+  * Input "copy messag m2", and then input "dir", you should see file m2 at the end of the list.
+  * Input "type m2", you should see the same content as file `messag`.
+  * Input "create test", you should now see a prompt "> ". Input the following:
+    > 123
+    > 456
+    > 7
+    > 
+    Now, if you input "dir", you should see a file named `test` at the end of the list.
+    If you input "type test", you should see the exact input.
+  * Input "copy shell s", and input "execute s", you should be in another shell program.
+    Now input "dir", you should see a file named `s` that has the same number of sectors as `shell` has.
+
+========= Troubleshooting =========
+1. Check if buffer size is appropriate
+2. Check if index is off by 1, or index never increment
+3. Check if the change is made to floppya.img

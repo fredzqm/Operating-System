@@ -32,13 +32,12 @@ int main() {
   newLine[2] = '\0';
 
   while (1) {
-    interrupt(0x21, 0, prompt, 0, 0); // give prompt
-    interrupt(0x21, 1, buffer, 0, 0); //  instruction
-    // interrupt(0x21, 0, buffer, 0, 0);
-    interrupt(0x21, 0, newLine, 0, 0);
-    handleInput(buffer);
-    interrupt(0x21, 0, newLine, 0, 0);
-    interrupt(0x21, 5, 0, 0, 0);
+    interrupt(0x21, 0, prompt, 0, 0); // print the prompt
+    interrupt(0x21, 1, buffer, 0, 0); // read the instruction
+    interrupt(0x21, 0, newLine, 0, 0); // print a new line
+    handleInput(buffer); // handle the command
+    interrupt(0x21, 0, newLine, 0, 0); // print a new line
+    interrupt(0x21, 5, 0, 0, 0); // exit, then the kernel will reload the shell
   }
 }
 
@@ -134,28 +133,28 @@ void handleInput(char *input) {
   commandArg[pointer] = '\0';
 
   if (compareStr(commandName, commandType) == 1) {
-    interrupt(0x21, 3, commandArg, buf, 0);
-    interrupt(0x21, 0, buf, 0, 0);
+    interrupt(0x21, 3, commandArg, buf, 0); // read file
+    interrupt(0x21, 0, buf, 0, 0);  // print file
   } else if (compareStr(commandName, commandExecute) == 1) {
-    interrupt(0x21, 4, commandArg, 0x2000, 0);
+    interrupt(0x21, 4, commandArg, 0x2000, 0); // execute file
   } else if (compareStr(commandName, commandDelete) == 1) {
-    interrupt(0x21, 7, commandArg, 0, 0);
+    interrupt(0x21, 7, commandArg, 0, 0); // delete file
   } else if (compareStr(commandName, commandCreate) == 1) {
     int count = 0;
     int readStringSize = 0;
-    interrupt(0x21, 0, promptLine, 0, 0);
-    interrupt(0x21, 1, buf + count, &readStringSize, 0);
+    interrupt(0x21, 0, promptLine, 0, 0); // print prompt 
+    interrupt(0x21, 1, buf + count, &readStringSize, 0); // read input
     while(readStringSize != 0) {
       count += readStringSize + 2;
-      interrupt(0x21, 0, newLine, 0, 0);
-      interrupt(0x21, 0, promptLine, 0, 0);
-      interrupt(0x21, 1, buf + count, &readStringSize, 0);
+      interrupt(0x21, 0, newLine, 0, 0); // print a new
+      interrupt(0x21, 0, promptLine, 0, 0); // print prompt
+      interrupt(0x21, 1, buf + count, &readStringSize, 0); // continue to read line
     }
     buf[count - 2] = '\0';
-    interrupt(0x21, 8, commandArg, buf, count/512 + 1);
+    interrupt(0x21, 8, commandArg, buf, count/512 + 1); // write to file
   } else if (compareStr(commandName, commandCopy) == 1) {
-    char arg1[7];
-    char arg2[7];
+    char arg1[512];
+    char arg2[512];
     int ptr = 0;
     int ptrArg2 = 0;
 
@@ -175,9 +174,9 @@ void handleInput(char *input) {
       ptrArg2++;
     }
     arg2[ptrArg2] = '\0';
-    interrupt(0x21, 0, arg1, 0, 0);
-    interrupt(0x21, 0, deliminator, 0, 0);
-    interrupt(0x21, 0, arg2, 0, 0);
+    // interrupt(0x21, 0, arg1, 0, 0);
+    // interrupt(0x21, 0, deliminator, 0, 0);
+    // interrupt(0x21, 0, arg2, 0, 0);
     copyFile(arg1, arg2);
   } else if (compareStr(commandName, commandDir) == 1) {
     int entry, flag;
@@ -211,6 +210,21 @@ void handleInput(char *input) {
       interrupt(0x21, 0, newLine, 0, 0);
     }
   } else {
+    // int t;
+    // int TEST_SIZE = 1000;
+    // char tempBuf[1001];
+    // char filename[5];
+    // filename[0] = 't';
+    // filename[1] = 'e';
+    // filename[2] = 's';
+    // filename[3] = 't';
+    // filename[4] = '\0';
+    // for (t = 0; t < TEST_SIZE; t++) {
+    //   tempBuf[t] = 48 + mod(t, 10);
+    // }
+    // tempBuf[TEST_SIZE] = '\0';
+    // interrupt(0x21, 8, filename, tempBuf, 2); // writeFile
+
     interrupt(0x21, 0, badCommand, 0, 0);
   }
 
@@ -231,27 +245,9 @@ int compareStr(char *a, char *b) {
 }
 
 void copyFile(char* filename1, char* filename2) {
-  char buffer[512];
-
+  char buffer[13312];
   char num[10];
-
-  convertIntToString(num, sizeOfSector(filename1));
-  interrupt(0x21, 0, newLine, 0, 0, 0);
-  interrupt(0x21, 0, num, 0, 0);
-  interrupt(0x21, 0, newLine, 0, 0);
-
-  convertIntToString(num, sizeOfSector(filename1));
-  interrupt(0x21, 0, newLine, 0, 0, 0);
-  interrupt(0x21, 0, num, 0, 0);
-  interrupt(0x21, 0, newLine, 0, 0);
-
   interrupt(0x21, 3, filename1, buffer, 0); // readFile
-
-  convertIntToString(num, sizeOfSector(filename1));
-  interrupt(0x21, 0, newLine, 0, 0, 0);
-  interrupt(0x21, 0, num, 0, 0);
-  interrupt(0x21, 0, newLine, 0, 0);
-
   interrupt(0x21, 8, filename2, buffer, sizeOfSector(filename1)); // writeFile
 }
 
