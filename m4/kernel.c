@@ -15,10 +15,6 @@ void executeProgram(char* name, int segment);
 void terminate();
 void deleteFile(char* name);
 
-
-// TODO
-void copyData(char *dest, char *src, int start, int len);
-
 int main() {
   char chars[512];
   char buffer[13312];
@@ -195,107 +191,45 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
 }
 
 void readFile(char *filename, char *buffer) {
-  // int i, j, k;
-  // char directoryBuffer[512];
-  // int sectorPointer = 0;
-  // readSector(&directoryBuffer, 2);
-
-  // for (i = 0; i < 16; i++) {
-  //   int match = 1;
-  //   for (j = 0; j < 6; j++){
-  //     if (directoryBuffer[i*32 + j] != filename[j]) {
-  //       match = 0;
-  //       break;
-  //     }
-  //     if (directoryBuffer[i*32 + j] == 0) {
-  //       break;
-  //     }
-  //   }
-  //   if (match) {
-  //     sectorPointer = i*32+6;
-  //     break;
-  //   }
-  // }
-
-  // if (sectorPointer == 0) {
-  //   *buffer = '\0';
-  //   return;
-  // }
-
-  // while (directoryBuffer[sectorPointer] != 0) {
-  //   readSector(buffer, directoryBuffer[sectorPointer]);
-  //   buffer += 512;
-  //   sectorPointer++;
-  // }
-
-  int i, j;
-  char foundFile;
-  char entry[32];
-
-  foundFile = 0;
-
-  readSector(buffer, 2);
+  int i, j, k;
+  char directoryBuffer[512];
+  int bufferPointer = 0;
+  int sectorPointer = 0;
+  readSector(&directoryBuffer, 2);
 
   for (i = 0; i < 16; i++) {
-      if (foundFile) {
-          return;
+    int match = 1;
+    for (j = 0; j < 6; j++){
+      if (directoryBuffer[i*32 + j] != filename[j]) {
+        match = 0;
+        break;
       }
-      copyData(entry, buffer, i * 32, 32);
-
-      foundFile = 0;
-      for (j = 0; j < 6; j++){
-          if (filename[j] == entry[j]) {
-              foundFile = 1;
-          }
-          else if (filename[j] != entry[j]){
-              foundFile = 0;
-              break;
-          }
-          if (j == 5) {
-              foundFile = 1;
-          }
+      if (directoryBuffer[i*32 + j] == 0) {
+        break;
       }
-
-      if (!foundFile){
-          continue;
-      }
-
-      for (j = 6; j < 32; j++){
-          if (entry[j] == 0){
-              break;
-          }
-          readSector(buffer, entry[j]);
-          buffer = buffer + 512;
-      }
-  }
-  /* If the file could not be found, set buffer accordingly */
-  buffer[0] = 'n';
-  buffer[1] = 'o';
-  buffer[2] = 't';
-  buffer[3] = ' ';
-  buffer[4] = 'f';
-  buffer[5] = 'o';
-  buffer[6] = 'u';
-  buffer[7] = 'n';
-  buffer[8] = 'd';
-  buffer[9] = '\n';
-  buffer[10] = '\0';
-}
-
-/* helper function. Similar to memcpy */
-void copyData(char *dest, char *src, int start, int len) {
-    int i;
-
-    for (i = 0; i < len; i++) {
-        *(dest + i) = *(src + start + i);
     }
+    if (match) {
+      sectorPointer = i*32+6;
+      break;
+    }
+  }
+
+  if (sectorPointer == 0) {
+    *buffer = '\0';
+    return;
+  }
+
+  while (directoryBuffer[sectorPointer] != 0) {
+    readSector(buffer + bufferPointer, directoryBuffer[sectorPointer]);
+    bufferPointer += 512;
+    sectorPointer++;
+  }
 }
 
 void executeProgram(char* name, int segment) {
   char programBuffer[13312];
   int programPointer;
   readFile(name, programBuffer);
-  /* '\3' means end of text. could be a bug. */
   for (programPointer = 0; programPointer <= 13312; programPointer++) {
     putInMemory(segment, programPointer, programBuffer[programPointer]);
   }
@@ -365,143 +299,76 @@ void deleteFile(char* name) {
 }
 
 void writeFile(char* name, char* buffer, int numberOfSectors) {
-  // int i, j, flag;
-  // char directoryBuffer[512];
-  // char mapBuffer[512];
-  // char sectorPointers[26];
-  // char errorMessage[10];
-  // readSector(directoryBuffer, 2);
-  // readSector(mapBuffer, 1);
-
-  // i = 0;
-  // for (j = 0 ; j < numberOfSectors; j++) {
-  //   while(mapBuffer[i]!=0x00) {
-  //     i++;
-  //     if (i > 2880){
-  //       errorMessage[0] = 'D';
-  //       errorMessage[1] = 'i';
-  //       errorMessage[2] = 's';
-  //       errorMessage[3] = 'k';
-  //       errorMessage[4] = ' ';
-  //       errorMessage[5] = 'f';
-  //       errorMessage[6] = 'u';
-  //       errorMessage[7] = 'l';
-  //       errorMessage[8] = 'l';
-  //       errorMessage[9] = '\0';
-  //       printString(errorMessage);
-  //       return;
-  //     }
-  //   }
-  //   sectorPointers[j] = i;
-  // }
-
-  // i = 0;
-  // while(directoryBuffer[i]!=0x00) {
-  //   i+=32;
-  // }
-
-  // if (i > 512) {
-  //   errorMessage[0] = 'F';
-  //   errorMessage[1] = 'i';
-  //   errorMessage[2] = 'l';
-  //   errorMessage[3] = 'e';
-  //   errorMessage[4] = ' ';
-  //   errorMessage[5] = 'f';
-  //   errorMessage[6] = 'u';
-  //   errorMessage[7] = 'l';
-  //   errorMessage[8] = 'l';
-  //   errorMessage[9] = '\0';
-  //   printString(errorMessage);
-  //   return;
-  // }
-
-  // flag = 0;
-  // for (j = 0; j < 6; j++) {
-  //   if (name[j] == '\0') {
-  //     flag = 1;
-  //   }
-  //   if (flag == 0) {
-  //     directoryBuffer[i+j] = name[j];
-  //   } else {
-  //     directoryBuffer[i+j] = '\0';
-  //   }
-  // }
-
-  // for (j = 0; j < numberOfSectors; j++) {
-  //   mapBuffer[sectorPointers[j]] = 0xFF;
-  //   directoryBuffer[i+j+6] = sectorPointers[j];
-  //   writeSector(buffer, sectorPointers[j]);
-  //   printString(errorMessage);
-  //   buffer += 512;
-  // }
-
-  // writeSector(directoryBuffer, 2);
-  // writeSector(mapBuffer, 1);
-  // 
-  char map[512];
-  char directory[512];
-  char entry[32];
-  int i, j, sectorCounter;
-  char foundEnd;
+  int i, j, flag;
+  char directoryBuffer[512];
+  char mapBuffer[512];
+  char sectorPointers[26];
+  char errorMessage[10];
+  readSector(directoryBuffer, 2);
+  readSector(mapBuffer, 1);
 
   i = 0;
-  j = 0; 
-  sectorCounter = 0;
-  foundEnd = 0;
-
-  /* load disk */
-  readSector(map, 1);
-  readSector(directory, 2);
-
-  for (i = 0; i < 16; i++){
-      copyData(entry, directory, i * 32, 32);
-
-      /* search for a free directory entry */
-      if(entry[0] == 0x00){
-          break;
+  for (j = 0 ; j < numberOfSectors; j++) {
+    while(mapBuffer[i]!=0x00) {
+      i++;
+      if (i > 2880){
+        errorMessage[0] = 'D';
+        errorMessage[1] = 'i';
+        errorMessage[2] = 's';
+        errorMessage[3] = 'k';
+        errorMessage[4] = ' ';
+        errorMessage[5] = 'f';
+        errorMessage[6] = 'u';
+        errorMessage[7] = 'l';
+        errorMessage[8] = 'l';
+        errorMessage[9] = '\0';
+        printString(errorMessage);
+        return;
       }
-  }
-  /* copy file name to a free directory entry */
-  for (j = 0; j < 6; j++){
-      if (foundEnd) {
-          entry[j] = 0x00;
-      } else {
-          entry[j] = name[j];
-      }
-      if (name[j] == '\0') {
-          foundEnd = 1;
-      }
+    }
+    sectorPointers[j] = i;
   }
 
-  /* search for free sectors in map */
-  for (j = 0; j < 256; j++){
-      if(map[j] == 0x00){
-          /* Update map */
-          map[j] == 0xFF;
-
-          /* Update sector information on entry */
-          entry[6 + sectorCounter] = j;
-
-          writeSector(buffer, j);
-
-          buffer += 512;
-          sectorCounter++;
-
-          if(sectorCounter == numberOfSectors){
-              /* fill remaining bytes in entry with 0x00 */
-              while(sectorCounter < 26){
-                  entry[6 + sectorCounter] = 0x00;
-                  sectorCounter++;
-              }
-              break;
-          }
-      }
+  i = 0;
+  while(directoryBuffer[i]!=0x00) {
+    i+=32;
   }
-  /* put entry back to directory */
-  copyData(directory + i * 32, entry, 0, 32);
 
-  /* write back to disk */
-  writeSector(map, 1);
-  writeSector(directory,2);
+  if (i > 512) {
+    errorMessage[0] = 'F';
+    errorMessage[1] = 'i';
+    errorMessage[2] = 'l';
+    errorMessage[3] = 'e';
+    errorMessage[4] = ' ';
+    errorMessage[5] = 'f';
+    errorMessage[6] = 'u';
+    errorMessage[7] = 'l';
+    errorMessage[8] = 'l';
+    errorMessage[9] = '\0';
+    printString(errorMessage);
+    return;
+  }
 
+  flag = 0;
+  for (j = 0; j < 6; j++) {
+    if (name[j] == '\0') {
+      flag = 1;
+    }
+    if (flag == 0) {
+      directoryBuffer[i+j] = name[j];
+    } else {
+      directoryBuffer[i+j] = '\0';
+    }
+  }
+
+  for (j = 0; j < numberOfSectors; j++) {
+    mapBuffer[sectorPointers[j]] = 0xFF;
+    directoryBuffer[i+j+6] = sectorPointers[j];
+    writeSector(buffer, sectorPointers[j]);
+    printString(errorMessage);
+    buffer += 512;
+  }
+
+  writeSector(directoryBuffer, 2);
+  writeSector(mapBuffer, 1);
 }
