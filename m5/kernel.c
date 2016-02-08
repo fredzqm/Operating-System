@@ -381,10 +381,12 @@ void writeFile(char* name, char* buffer, int numberOfSectors, int dirID) {
 
 int findEmptyEntry(char* directoryBuffer) {
   int i;
-  // the first 32 bytes contain information about this directory
-  for (i = 1; i < SECTOR_SIZE; i+= FILE_ENTRY_LENGTH) {
-    if (directoryBuffer[i] == 0)
+  // Do not use i = 0!
+  // When i == 0, he first 32 bytes contain information about this directory
+  for (i = 32; i < SECTOR_SIZE; i+= FILE_ENTRY_LENGTH) {
+    if (directoryBuffer[i] == 0) {
       return i;
+    }
   }
   return -1;
 }

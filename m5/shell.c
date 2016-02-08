@@ -376,15 +376,6 @@ int mod(int a, int b) {
 
 
 
-
-
-
-
-
-
-
-
-
 // ----------- standard IO
 void printString(char *chars) { // make a sys call to kernel 
   interrupt(0x21, 0, chars, 0, 0); //print the prompt
