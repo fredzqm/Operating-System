@@ -6,6 +6,7 @@
 #define FILE_ENTRY_NUM 16
 #define SECTOR_SIZE 512
 #define SECTOR_TOTAL_NUM 2880
+#define PROC_ENTRY_NUM 8
 
 #define MAP_SECTOR 1
 #define ROOT_SECTOR 2
@@ -16,6 +17,14 @@ typedef struct {
   int isDirectory;
   int isExecutable;
 } File;
+
+// M5 Step 8
+typedef struct {
+  int active; // 1=active, 0=inactive
+  int sp; // stack pointer
+} ProcEntry;
+ProcEntry procTable[PROC_ENTRY_NUM];
+int currentProcess;
 
 // defined sys calls
 void handleInterrupt21(int, int, int, int);
@@ -36,6 +45,9 @@ void terminate();
 int searchDirectory(char *directoryBuffer, char *name);
 void scanDirectory(int dirID, File* fileInfo, int* fileNum);
 
+// Handle timer interrupt
+void handleTimerInterrupt(int segment, int sp);
+
 int mod(int a, int b);
 int div(int a, int b);
 
@@ -45,6 +57,7 @@ int main() {
   char buffer[13312];
   char line[512];
   char shell[6];
+  int i;
 
   shell[0] = 's';
   shell[1] = 'h';
@@ -68,8 +81,7 @@ int main() {
   /* readSector(buffer, 30); */
   /* printString(buffer); */
 
-  /* Interrupt*/
-  makeInterrupt21();
+  /* Test interrupt */
   /* interrupt(0x21, 1, line, 0, 0); */
   /* interrupt(0x21, 0, line, 0, 0); */
 
@@ -80,6 +92,17 @@ int main() {
   /* Milestone 3 - execute */
   /* interrupt(0x21, 4, "tstprg\0", 0x2000, 0); */
   /* interrupt(0x21, 4, "tstpr2\0", 0x2000, 0); */
+
+  /* Initialize Process Table */
+  for (i = 0; i < PROC_ENTRY_NUM; i++) {
+    procTable[i].active = 0;
+    procTable[i].sp = 0xFF00;
+  }
+  currentProcess = 0;
+
+  /* Interrupt*/
+  makeInterrupt21();
+  makeTimerInterrupt();
 
   /* Milestone 3 - shell */
   interrupt(0x21, 4, shell, 0x2000, 0);
@@ -440,6 +463,16 @@ void scanDirectory(int dirID, File* fileInfo, int* fileNum) {
       }
     }
   }
+}
+
+void handleTimerInterrupt(int segment, int sp) {
+  char tic[4];
+  tic[0] = 't';
+  tic[1] = 'i';
+  tic[2] = 'c';
+  tic[3] = '\0';
+  // printString(tic);
+  returnFromTimer(segment, sp);
 }
 
 int mod(int a, int b) {
