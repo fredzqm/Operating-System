@@ -26,6 +26,8 @@ typedef struct {
 ProcEntry procTable[PROC_ENTRY_NUM];
 int currentProcess;
 
+int roundRobin[PROC_ENTRY_NUM];
+
 // defined sys calls
 void handleInterrupt21(int, int, int, int);
 // standard IO
@@ -39,7 +41,8 @@ void writeFile(char* name, char* buffer, int numberOfSectors, int dirID);
 void readFile(char *filename, char *buffer, int dirID);
 void deleteFile(char* name, int dirID);
 // program management
-void execute(char* name, int segment, int dirID);
+void execute(char* name);
+void runProgram(char* name, int segment, int dirID);
 void terminate();
 
 int searchDirectory(char *directoryBuffer, char *name);
@@ -50,6 +53,8 @@ void handleTimerInterrupt(int segment, int sp);
 
 int mod(int a, int b);
 int div(int a, int b);
+
+
 
 
 int main() {
@@ -123,7 +128,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   } else if (ax == 3) {
     readFile(bx, cx, ROOT_SECTOR);
   } else if (ax == 4) {
-    execute(bx, cx, ROOT_SECTOR);
+    runProgram(bx, cx, ROOT_SECTOR);
   } else if (ax == 5) {
     terminate();
   } else if (ax == 6) {
@@ -243,25 +248,69 @@ void readFile(char *filename, char *buffer, int dirID) {
   }
 }
 
-void execute(char* name, int segment, int dirID) {
-  char programBuffer[13312];
-  int programPointer;
-  readFile(name, programBuffer, ROOT_SECTOR);
-  for (programPointer = 0; programPointer <= 13312; programPointer++) {
-    putInMemory(segment, programPointer, programBuffer[programPointer]);
+void execute(char* name) {
+  // char programBuffer[13312];
+  int i;
+  // readFile(name, programBuffer, ROOT_SECTOR);
+  for (i = 0; i <= PROC_ENTRY_NUM; i++) {
+    if(procTable[i].active == 0) {      
+      procTable[i].active = 1;
+      launchProgram(i* 0x1000 + 0x2000); // COULD BE A BUG!!!!!!!!!!!
+      break;
+    }
   }
-  launchProgram(segment);
+}
+
+void runProgram(char* name, int segment, int dirID) {
+    char errorMessage[5];
+
+  char programBuffer[13312];
+  int programPointer, i, segment2;
+  readFile(name, programBuffer, ROOT_SECTOR);
+
+  setKernelDataSegment();
+
+  for (i = 0; i <= PROC_ENTRY_NUM; i++) {
+    if(procTable[i].active == 0) {      
+      procTable[i].active = 1;
+      currentProcess = i;
+      break;
+    }
+  }
+
+  restoreDataSegment();
+
+  if (i == PROC_ENTRY_NUM) {
+    // TODO::: Runzhi is bae. 
+  }
+    errorMessage[0] = 'F';
+    errorMessage[1] = 'i';
+    errorMessage[2] = 'l';
+    errorMessage[3] = 'e';
+    errorMessage[4] = '\0';
+  segment2 = i* 0x1000 + 0x2000;
+  for (programPointer = 0; programPointer <= 13312; programPointer++) {
+    putInMemory(segment2 + programPointer, programPointer, programBuffer[programPointer]);
+  }
+  initializeProgram(segment2); // COULD BE A BUG!!!!!!!!!!!
+  // printString(errorMessage);
+  // launchProgram(segment);
 }
 
 void terminate() {
-  char shell[6];
-  shell[0] = 's';
-  shell[1] = 'h';
-  shell[2] = 'e';
-  shell[3] = 'l';
-  shell[4] = 'l';
-  shell[5] = '\0';
-  interrupt(0x21, 4, shell, 0x2000, 0);
+  // char shell[6];
+  // shell[0] = 's';
+  // shell[1] = 'h';
+  // shell[2] = 'e';
+  // shell[3] = 'l';
+  // shell[4] = 'l';
+  // shell[5] = '\0';
+  setKernelDataSegment();
+  procTable[currentProcess].active = 0;
+  while (1) {
+
+  }
+  // interrupt(0x21, 4, shell, 0x2000, 0);
 }
 
 void writeSector(char *chars, int sector) {
@@ -466,13 +515,27 @@ void scanDirectory(int dirID, File* fileInfo, int* fileNum) {
 }
 
 void handleTimerInterrupt(int segment, int sp) {
-  char tic[4];
-  tic[0] = 't';
-  tic[1] = 'i';
-  tic[2] = 'c';
-  tic[3] = '\0';
+  int curr;
+  int i = PROC_ENTRY_NUM;
+  // char tic[4];
+  // tic[0] = 't';
+  // tic[1] = 'i';
+  // tic[2] = 'c';
+  // tic[3] = '\0';
   // printString(tic);
-  returnFromTimer(segment, sp);
+  setKernelDataSegment();
+  procTable[currentProcess].sp = sp;
+  currentProcess = (currentProcess+1) % PROC_ENTRY_NUM;
+  while (procTable[currentProcess].active == 0) {
+    if (i == 0) {
+      break;
+    }
+    currentProcess = (currentProcess+1) % PROC_ENTRY_NUM;
+    i--;
+  }
+  curr = currentProcess * 0x1000 + 0x2000;
+  restoreDataSegment();
+  returnFromTimer(curr, sp);
 }
 
 int mod(int a, int b) {

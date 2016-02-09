@@ -55,6 +55,8 @@ int main() {
   deliminator[2] = ' ';
   deliminator[3] = '\0';
 
+  enableInterrupts();
+
 
   while (1) {
     printString(prompt);
