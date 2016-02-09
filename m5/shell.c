@@ -399,7 +399,7 @@ void deleteFile(char* filename) { // make a sys call to kernel
   interrupt(0x21, 7, filename, 0, 0); // delete file
 }
 
-void executeFile(char* filename) { // make a sys call to kernel 
+void executeFile(char* filename) { // make a sys call to kernel
   interrupt(0x21, 4, filename, 0x2000, 0); // execute file at 0x2000 segment
 }
 

@@ -99,13 +99,11 @@ int main() {
   /* interrupt(0x21, 4, "tstpr2\0", 0x2000, 0); */
 
   /* Initialize Process Table */
-  // setKernelDataSegment();
   for (i = 0; i < PROC_ENTRY_NUM; i++) {
     procTable[i].active = 0;
     procTable[i].sp = 0xFF00;
   }
   curProcKernel = 0;
-  // restoreDataSegment();
 
   /* Interrupt*/
   makeInterrupt21();
@@ -274,7 +272,7 @@ void runProgram(char* name, int segment, int dirID) {
   // number[1] = ' ';
   // number[2] = '\0';
   // printString(programBuffer);
-  // LESSON: Must call printString() in kernel data segment!
+  // LESSON: Maybe should call printString() in kernel data segment!
 
   segment2 = (t + 2) * 0x1000;
   for (i = 0; i <= 13312; i++) {
@@ -289,31 +287,17 @@ void runProgram(char* name, int segment, int dirID) {
 
 void handleTimerInterrupt(int segment, int sp) {
   char str[10];
-  int t, curProcUser, curProcSegUser, curProcSpUser;
-  int count;
+  int curProcUser, curProcSegUser, curProcSpUser, count;
+
   setKernelDataSegment();
   curProcSegUser = segment;
   curProcSpUser = sp;
-  curProcUser = segment / 0x1000 - 2;
-  procTable[curProcUser].sp = sp;
+  curProcUser = div(curProcSegUser, 0x1000) - 2;
 
-  // if (curProcUser == curProcKernel) {
-  //   procTable[curProcUser].sp = sp;
-  // } else {
-  //   // interrupt happend to kernel codes.
-  //   str2[0] = 'A';
-  //   str2[1] = 'B';
-  //   str2[2] = 'C';
-  //   str2[3] = 'D';
-  //   convertIntToString(str2, curProcKernel);
-  //   str2[5] = '\r';
-  //   str2[4] = '\n';
-  //   str2[6] = '\0';
-  //   printString(str2);
-  //   restoreDataSegment();
-  //   returnFromTimer(curProcSegUser, curProcSpUser);
-  //   // it should not reach here
-  // }
+  if (curProcUser >= 0) {
+    procTable[curProcUser].sp = sp;
+  }
+
   for (count = 0; count <= PROC_ENTRY_NUM; count++) {
     curProcUser++;
     if (curProcUser == PROC_ENTRY_NUM) {
@@ -331,7 +315,7 @@ void handleTimerInterrupt(int segment, int sp) {
 }
 
 void terminate() {
-  int i;
+  // int i;
   // char shell[6];
   // shell[0] = 't';
   // shell[1] = 'e';
