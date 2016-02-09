@@ -143,6 +143,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     writeFile(bx, cx, dx, ROOT_SECTOR);
   } else if (ax == 9) {
     scanDirectory(bx, cx, dx);
+  } else if (ax == 10) {
+    ax == 10;
+    killProcess(bx);
   } else {
     char errorMsg[8];
     errorMsg[0] = 'E';
