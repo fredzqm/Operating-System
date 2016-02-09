@@ -38,6 +38,7 @@ load:
 	./loadFile tstprg
 	./loadFile tstpr2
 	./loadFile shell
+	./loadFile phello
 
 run:
 	bochs -f opsys.bxrc

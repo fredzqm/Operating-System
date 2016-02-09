@@ -24,7 +24,7 @@ typedef struct {
   int sp; // stack pointer
 } ProcEntry;
 ProcEntry procTable[PROC_ENTRY_NUM];
-int currentProcess;
+int curProcKernel;
 
 int roundRobin[PROC_ENTRY_NUM];
 
@@ -41,7 +41,6 @@ void writeFile(char* name, char* buffer, int numberOfSectors, int dirID);
 void readFile(char *filename, char *buffer, int dirID);
 void deleteFile(char* name, int dirID);
 // program management
-void execute(char* name);
 void runProgram(char* name, int segment, int dirID);
 void terminate();
 
@@ -51,9 +50,10 @@ void scanDirectory(int dirID, File* fileInfo, int* fileNum);
 // Handle timer interrupt
 void handleTimerInterrupt(int segment, int sp);
 
+// Utilities
 int mod(int a, int b);
 int div(int a, int b);
-
+void convertIntToString(char* buffer, int n);
 
 
 
@@ -99,11 +99,13 @@ int main() {
   /* interrupt(0x21, 4, "tstpr2\0", 0x2000, 0); */
 
   /* Initialize Process Table */
+  setKernelDataSegment();
   for (i = 0; i < PROC_ENTRY_NUM; i++) {
     procTable[i].active = 0;
     procTable[i].sp = 0xFF00;
   }
-  currentProcess = 0;
+  curProcKernel = 0;
+  restoreDataSegment();
 
   /* Interrupt*/
   makeInterrupt21();
@@ -248,68 +250,175 @@ void readFile(char *filename, char *buffer, int dirID) {
   }
 }
 
-void execute(char* name) {
-  // char programBuffer[13312];
-  int i;
-  // readFile(name, programBuffer, ROOT_SECTOR);
-  for (i = 0; i <= PROC_ENTRY_NUM; i++) {
-    if(procTable[i].active == 0) {      
-      procTable[i].active = 1;
-      launchProgram(i* 0x1000 + 0x2000); // COULD BE A BUG!!!!!!!!!!!
-      break;
-    }
-  }
-}
-
 void runProgram(char* name, int segment, int dirID) {
-    char errorMessage[5];
-
+  char errorMessage[10];
+  char number[10];
+  char newline[3];
   char programBuffer[13312];
-  int programPointer, i, segment2;
+  int i, t, current, curProcUser;
+  ProcEntry te[PROC_ENTRY_NUM];
+  
   readFile(name, programBuffer, ROOT_SECTOR);
 
   setKernelDataSegment();
-
-  for (i = 0; i <= PROC_ENTRY_NUM; i++) {
+  for (i = 0; i < PROC_ENTRY_NUM; i++) {
     if(procTable[i].active == 0) {      
       procTable[i].active = 1;
-      currentProcess = i;
+      procTable[i].sp = 0xFF00;
+      curProcKernel = i;
       break;
     }
   }
+  t = curProcKernel;
+  restoreDataSegment();
+  curProcUser = t;
 
+  for (i = 0; i < PROC_ENTRY_NUM; i++) {
+    setKernelDataSegment();
+    t = procTable[i].active;
+    restoreDataSegment();
+    te[i].active = t ;
+    setKernelDataSegment();
+    t = procTable[i].sp;
+    restoreDataSegment();
+    te[i].sp = t;
+  }
+
+  errorMessage[0] = ' ';
+  errorMessage[1] = ':';
+  errorMessage[2] = ' ';
+  errorMessage[3] = '\0';
+  newline[0] = '\r';
+  newline[1] = '\n';
+  newline[2] = '\0';
+  for (i = 0; i < PROC_ENTRY_NUM; i++) {
+    convertIntToString(number, i );
+    printString(number);
+    printString(errorMessage);
+    convertIntToString(number, te[i].active );
+    printString(number);
+    printString(errorMessage);
+    convertIntToString(number, te[i].sp/0x100);
+    printString(number);
+    printString(errorMessage);
+    printString(newline);
+  }
+  errorMessage[0] = 'C';
+  errorMessage[1] = 'u';
+  errorMessage[2] = 'r';
+  errorMessage[3] = 'r';
+  errorMessage[4] = 'e';
+  errorMessage[5] = 'n';
+  errorMessage[6] = 't';
+  errorMessage[7] = ':';
+  errorMessage[8] = ' ';
+  errorMessage[9] = '\0';
+  printString(errorMessage);
+  convertIntToString(number, curProcUser);
+  printString(number);
+  printString(newline);
+  
+  if (i == PROC_ENTRY_NUM) {
+
+  }  
+  segment = curProcUser * 0x1000 + 0x2000;
+  for (i = 0; i <= 13312; i++) {
+    putInMemory(segment, i, programBuffer[i]);
+  }
+  launchProgram(segment);
+  // initializeProgram(segment);
+}
+
+
+void handleTimerInterrupt(int segment, int sp) {
+  char str[14];
+  int t, curProcUser, curProcSegUser, curProcSpUser;
+  curProcUser = segment / 0x1000 - 2;
+  setKernelDataSegment();
+  if (curProcUser != curProcKernel) {
+    // interrupt happend to kernel codes.
+    str[0] = ' ';
+    str[1] = 'K';
+    str[2] = 'I';
+    str[3] = ' ';
+    str[4] = '\n';
+    str[5] = '\r';
+    str[6] = '\0';
+    // printString(str);
+    restoreDataSegment();
+  returnFromTimer(segment, sp);
+    // it should not reach here
+  }
   restoreDataSegment();
 
-  if (i == PROC_ENTRY_NUM) {
-    // TODO::: Runzhi is bae. 
+  t = sp;
+  setKernelDataSegment();
+  procTable[curProcKernel].sp = t;
+  restoreDataSegment();
+  
+  setKernelDataSegment();
+  t = curProcKernel;
+  curProcKernel++;
+  if (curProcKernel == PROC_ENTRY_NUM)
+    curProcKernel = 0;
+  while (procTable[curProcKernel].active == 0) {
+    curProcKernel++;
+    if (curProcKernel == PROC_ENTRY_NUM)
+      curProcKernel = 0;
+    if (curProcKernel == t)
+      break;
   }
-    errorMessage[0] = 'F';
-    errorMessage[1] = 'i';
-    errorMessage[2] = 'l';
-    errorMessage[3] = 'e';
-    errorMessage[4] = '\0';
-  segment2 = i* 0x1000 + 0x2000;
-  for (programPointer = 0; programPointer <= 13312; programPointer++) {
-    putInMemory(segment2 + programPointer, programPointer, programBuffer[programPointer]);
-  }
-  initializeProgram(segment2); // COULD BE A BUG!!!!!!!!!!!
-  // printString(errorMessage);
-  // launchProgram(segment);
+  t = curProcKernel;
+  restoreDataSegment();
+  curProcUser = t;
+  curProcSegUser = curProcUser * 0x1000 + 0x2000;
+  
+  setKernelDataSegment();
+  t = procTable[curProcUser].sp;
+  restoreDataSegment();
+  curProcSpUser = t;
+  
+  returnFromTimer(curProcSegUser, curProcSpUser);
+
+  // magic that change the curProcKernel str
+  // launchProgram(procTable[curProcKernel].sp);
+  // int curr;
+  // int i = PROC_ENTRY_NUM;
+  // char tic[4];
+  // tic[0] = 't';
+  // tic[1] = 'i';
+  // tic[2] = 'c';
+  // tic[3] = '\0';
+  // printString(tic);
+
+  // convertIntToString(str, sp / 0x1000 + 1000);
+  // str[4] = ' ';
+  // str[5] = ' ';
+  // str[6] = '\0';
+  // printString(str);
+  // returnFromTimer(segment, sp);
+
+  // returnFromTimer(segment, sp);
+  // returnFromTimer(0x1000 * currentProcess + 0x2000, procTable[currentProcess].sp);
 }
 
 void terminate() {
-  // char shell[6];
-  // shell[0] = 's';
-  // shell[1] = 'h';
-  // shell[2] = 'e';
-  // shell[3] = 'l';
-  // shell[4] = 'l';
-  // shell[5] = '\0';
-  setKernelDataSegment();
-  procTable[currentProcess].active = 0;
-  while (1) {
+  int i;
+  char shell[6];
+  shell[0] = 't';
+  shell[1] = 'e';
+  shell[2] = 'r';
+  shell[3] = '\n';
+  shell[4] = '\r';
+  shell[5] = '\0';
+  printString(shell);
 
-  }
+  setKernelDataSegment();
+  procTable[curProcKernel].active = 0;
+  restoreDataSegment();
+  while(1);
+  // for (i = 0 ; i < -1; i++);
+  // runProgram(shell);
   // interrupt(0x21, 4, shell, 0x2000, 0);
 }
 
@@ -514,28 +623,31 @@ void scanDirectory(int dirID, File* fileInfo, int* fileNum) {
   }
 }
 
-void handleTimerInterrupt(int segment, int sp) {
-  int curr;
-  int i = PROC_ENTRY_NUM;
-  // char tic[4];
-  // tic[0] = 't';
-  // tic[1] = 'i';
-  // tic[2] = 'c';
-  // tic[3] = '\0';
-  // printString(tic);
-  setKernelDataSegment();
-  procTable[currentProcess].sp = sp;
-  currentProcess = (currentProcess+1) % PROC_ENTRY_NUM;
-  while (procTable[currentProcess].active == 0) {
-    if (i == 0) {
-      break;
-    }
-    currentProcess = (currentProcess+1) % PROC_ENTRY_NUM;
-    i--;
+
+
+void convertIntToString(char* buffer, int n) {
+  int i = 0;
+  int t = 0;
+  int isNeg = n < 0;
+  int n1 = isNeg ? -n : n;
+
+  while(n1!=0) {
+      buffer[i++] = mod(n1, 10) + '0';
+      n1=n1/10;
   }
-  curr = currentProcess * 0x1000 + 0x2000;
-  restoreDataSegment();
-  returnFromTimer(curr, sp);
+  if(isNeg) {
+      buffer[i++] = '-';
+  }
+  buffer[i] = '\0';
+  for(t = 0; t < i/2; t++) {
+      buffer[t] ^= buffer[i-t-1];
+      buffer[i-t-1] ^= buffer[t];
+      buffer[t] ^= buffer[i-t-1];
+  }
+  if (n == 0) {
+      buffer[0] = '0';
+      buffer[1] = '\0';
+  }
 }
 
 int mod(int a, int b) {
