@@ -143,9 +143,9 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     writeFile(bx, cx, dx, ROOT_SECTOR);
   } else if (ax == 9) {
     scanDirectory(bx, cx, dx);
-  } else if (ax == 10) {
-    ax == 10;
-    killProcess(bx);
+  // } else if (ax == 10) {
+  //   ax == 10;
+  //   killProcess(bx);
   } else {
     char errorMsg[8];
     errorMsg[0] = 'E';
@@ -245,7 +245,7 @@ void readFile(char *filename, char *buffer, int dirID) {
     *buffer = '\0';
     return;
   }
-  
+
   sectorPointer = entryOffset + 6;
 
   while (directoryBuffer[sectorPointer] != 0) {
@@ -278,8 +278,7 @@ void runProgram(char* name, int segment, int dirID) {
   // convertIntToString(number, t);
   // number[1] = ' ';
   // number[2] = '\0';
-  // printString(programBuffer);
-  // LESSON: Maybe should call printString() in kernel data segment!
+  // printString(number);
 
   segment2 = (t + 2) * 0x1000;
   for (i = 0; i <= 13312; i++) {
