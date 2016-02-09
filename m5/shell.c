@@ -57,7 +57,6 @@ int main() {
 
   enableInterrupts();
 
-
   while (1) {
     printString(prompt);
     readString(buffer, 0);
