@@ -47,8 +47,12 @@ void terminate();
 int searchDirectory(char *directoryBuffer, char *name);
 void scanDirectory(int dirID, File* fileInfo, int* fileNum);
 
+// Process management
+void killProcess(int id);
+
 // Handle timer interrupt
 void handleTimerInterrupt(int segment, int sp);
+
 
 // Utilities
 int mod(int a, int b);
@@ -139,7 +143,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     writeFile(bx, cx, dx, ROOT_SECTOR);
   } else if (ax == 9) {
     scanDirectory(bx, cx, dx);
-  }else {
+  } else {
     char errorMsg[8];
     errorMsg[0] = 'E';
     errorMsg[1] = 'r';
@@ -284,9 +288,13 @@ void runProgram(char* name, int segment, int dirID) {
   restoreDataSegment();
 }
 
+void killProcess(int id) {
+  setKernelDataSegment();
+  procTable[id].active = 0;
+  restoreDataSegment();
+}
 
 void handleTimerInterrupt(int segment, int sp) {
-  char str[10];
   int curProcUser, curProcSegUser, curProcSpUser, count;
 
   setKernelDataSegment();

@@ -25,6 +25,7 @@ void writeFile(char* filename, char* buffer, int numberOfSectors);
 void readFile(char *filename, char *buffer);
 void deleteFile(char* filename);
 void executeFile(char* filename);
+void kill(int id);
 void exit();
 
 
@@ -77,6 +78,7 @@ void handleInput(char *input) {
   char commandRm[3];
   char commandExecute[8];
   char commandCreate[7];
+  char commandKill[5];
   char commandCopy[5];
   char commandDir[4];
   char badCommand[13];
@@ -110,6 +112,12 @@ void handleInput(char *input) {
   commandDelete[4] = 't';
   commandDelete[5] = 'e';
   commandDelete[6] = '\0';
+
+  commandKill[0] = 'k';
+  commandKill[1] = 'i';
+  commandKill[2] = 'l';
+  commandKill[3] = 'l';
+  commandKill[4] = '\0';
 
   commandRm[0] = 'r';
   commandRm[1] = 'm';
@@ -166,6 +174,8 @@ void handleInput(char *input) {
     deleteFile(commandArg); // delete file
   } else if (compareStr(commandName, commandCreate) == 1) {
     touch(commandArg); // create file
+  } else if (compareStr(commandName, commandKill) == 1) {
+    kill((int) commandArg[0] - 48);// kill process
   } else if (compareStr(commandName, commandCopy) == 1) {
     char arg1[512];
     char arg2[512];
@@ -405,6 +415,10 @@ void executeFile(char* filename) { // make a sys call to kernel
 
 
 // ----------- Process control
+void kill(int id) {
+  interrupt(0x21, 10, id, 0, 0);
+}
+
 void exit() { // make a sys call to kernel 
   interrupt(0x21, 5, 0, 0, 0); // exit, then the kernel will reload the shell
 }
