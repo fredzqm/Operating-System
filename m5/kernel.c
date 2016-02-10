@@ -116,6 +116,7 @@ int main() {
   /* Milestone 3 - shell */
   interrupt(0x21, 4, shell, 0x2000, 0);
 
+  while (1);
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
@@ -143,9 +144,8 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     writeFile(bx, cx, dx, ROOT_SECTOR);
   } else if (ax == 9) {
     scanDirectory(bx, cx, dx);
-  // } else if (ax == 10) {
-  //   ax == 10;
-  //   killProcess(bx);
+  } else if (ax == 10) {
+    killProcess(bx);
   } else {
     char errorMsg[8];
     errorMsg[0] = 'E';
