@@ -10,3 +10,4 @@ clear: clears the scren
 execforeground: waits for the program to terminate and then returns to shell
 help: lists all commands
 ps: lists all the processes
+bgcolor: changes the background color (black, purple)

@@ -26,7 +26,7 @@ typedef struct {
   int waiting; /* >=0 waiting, -1=not waiting */
 } ProcEntry;
 ProcEntry procTable[PROC_ENTRY_NUM];
-int curProcKernel;
+int currentProcess;
 
 int roundRobin[PROC_ENTRY_NUM];
 
@@ -113,7 +113,7 @@ int main() {
     procTable[i].sp = 0xFF00;
     procTable[i].waiting = -1;
   }
-  curProcKernel = 0;
+  currentProcess = 0;
 
   /* Interrupt*/
   makeInterrupt21();
@@ -187,7 +187,7 @@ void clear() {
   int bx = bh * 256 + bl;
   int dx = dl * 256 + dh;
   int ax = ah * 256 + al;
-  
+
   blankSpace[0] = '\n';
   blankSpace[1] = '\0';
   for(i=0; i<25; i++) {
@@ -202,6 +202,7 @@ void printString(char *chars) {
   char al;
   char ah;
   int ax;
+
   while (*chars != '\0') {
     interrupt(0x10, 0xe * 256 + *chars, 0, 0, 0);
     chars++;
@@ -361,9 +362,9 @@ void handleTimerInterrupt(int segment, int sp) {
       }
     }
     if (procTable[curProcUser].active == 1) {
-      curProcKernel = curProcUser;
-      curProcSegUser = curProcKernel * 0x1000 + 0x2000;
-      curProcSpUser = procTable[curProcKernel].sp;
+      currentProcess = curProcUser;
+      curProcSegUser = currentProcess * 0x1000 + 0x2000;
+      curProcSpUser = procTable[currentProcess].sp;
       break;
     }
   }
@@ -383,7 +384,7 @@ void terminate() {
   /* shell[5] = '\0'; */
   /* printString(shell); */
   setKernelDataSegment();
-  procTable[curProcKernel].active = 0;
+  procTable[currentProcess].active = 0;
   restoreDataSegment();
   while(1);
   /* for (i = 0 ; i < -1; i++); */
@@ -661,6 +662,11 @@ void printProcTable() {
     te[i].sp = t;
   }
 
+  setKernelDataSegment(); 
+  t = currentProcess;
+  restoreDataSegment();
+  curProcUser = t;
+
   errorMessage[0] = ' ';
   errorMessage[1] = ':';
   errorMessage[2] = ' ';
@@ -680,7 +686,8 @@ void printProcTable() {
     printString(errorMessage);
     printString(newline);
   }
-/*  errorMessage[0] = 'C';
+
+  errorMessage[0] = 'C';
   errorMessage[1] = 'u';
   errorMessage[2] = 'r';
   errorMessage[3] = 'r';
@@ -691,9 +698,7 @@ void printProcTable() {
   errorMessage[8] = ' ';
   errorMessage[9] = '\0';
   printString(errorMessage);
-  setKernelDataSegment();
-  convertIntToString(number, curProcKernel);
-  restoreDataSegment();
+  convertIntToString(number, curProcUser);
   printString(number);
-  printString(newline); */
+  printString(newline);
 }

@@ -30,6 +30,8 @@ void terminate();
 void clear();
 void ps();
 
+/* Customization */
+void bgcolor(char *color);
 
 /* helper methods*/
 int sizeOfSector(char* filename);
@@ -59,6 +61,8 @@ int main() {
   deliminator[3] = '\0';
 
   enableInterrupts();
+
+  clear();
 
   while (1) {
     printString(prompt);
@@ -93,6 +97,8 @@ void handleInput(char *input) {
   char commandClear[6];
   char commandHelp[5];
   char commandPs[3];
+  char commandFgColor[8];
+  char commandBgColor[8];
   char commandExeforeground[15];
   int pointer = 0;
 
@@ -213,6 +219,24 @@ void handleInput(char *input) {
   commandPs[1] = 's';
   commandPs[2] = '\0';
 
+  commandBgColor[0] = 'b';
+  commandBgColor[1] = 'g';
+  commandBgColor[2] = 'c';
+  commandBgColor[3] = 'o';
+  commandBgColor[4] = 'l';
+  commandBgColor[5] = 'o';
+  commandBgColor[6] = 'r';
+  commandBgColor[7] = '\0';
+
+  commandFgColor[0] = 'f';
+  commandFgColor[1] = 'g';
+  commandFgColor[2] = 'c';
+  commandFgColor[3] = 'o';
+  commandFgColor[4] = 'l';
+  commandFgColor[5] = 'o';
+  commandFgColor[6] = 'r';
+  commandFgColor[7] = '\0';
+
   helpFileName[0] = 'h';
   helpFileName[1] = 'e';
   helpFileName[2] = 'l';
@@ -282,6 +306,10 @@ void handleInput(char *input) {
     ls();
   } else if (compareStr(commandName, commandLs) == 1) {
     ls();
+  } else if (compareStr(commandName, commandBgColor) == 1) {
+    bgcolor(commandArg);
+  } else if (compareStr(commandName, commandFgColor) == 1) {
+    // fgcolor(commandArg);
   } else if (compareStr(commandName, commandCd) == 1) {
     cd(commandType);
   } else {
@@ -511,3 +539,44 @@ void clear() {
 void ps() {
   interrupt(0x21, 13, 0, 0, 0); /* Print process table */
 }
+
+/* Customization */
+void bgcolor(char *color) {
+  char colorBlack[6];
+  char colorPurple[7];
+  int i;
+  int j;
+  char blankSpace[2];
+  char al = 0;
+  char bl = 0;
+  char ah = 0x0B;
+  char bh = 0x00;
+  int bx;
+  int ax = ah * 256 + al;
+
+  colorBlack[0] = 'b';
+  colorBlack[1] = 'l';
+  colorBlack[2] = 'a';
+  colorBlack[3] = 'c';
+  colorBlack[4] = 'k';
+  colorBlack[5] = '\0';
+
+  colorPurple[0] = 'p';
+  colorPurple[1] = 'u';
+  colorPurple[2] = 'r';
+  colorPurple[3] = 'p';
+  colorPurple[4] = 'l';
+  colorPurple[5] = 'e';
+  colorPurple[6] = '\0';
+
+  if (compareStr(color, colorPurple)) {
+    bl = 0x05;
+    bx = bh * 256 + bl;
+    interrupt(0x10, ax, bx, 0, 0);
+  } else if (compareStr(color, colorBlack)) {
+    bl = 0x00;
+    bx = bh * 256 + bl;
+    interrupt(0x10, ax, bx, 0, 0);
+  }
+}
+
