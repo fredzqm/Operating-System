@@ -58,7 +58,7 @@ void handleTimerInterrupt(int segment, int sp);
 int mod(int a, int b);
 int div(int a, int b);
 void convertIntToString(char* buffer, int n);
-
+void printProcTable();
 
 
 int main() {
@@ -585,4 +585,60 @@ int div(int a, int b) {
     quotient = quotient + 1;
   }
   return quotient;
+}
+
+void printProcTable() {
+  char errorMessage[10];
+  char number[10];
+  char newline[3];
+  char programBuffer[13312];
+  ProcEntry te[PROC_ENTRY_NUM];
+  int i, t, current, curProcUser;
+  
+  // ------------ print proc table out
+  for (i = 0; i < PROC_ENTRY_NUM; i++) {
+    setKernelDataSegment();
+    t = procTable[i].active;
+    restoreDataSegment();
+    te[i].active = t ;
+    setKernelDataSegment();
+    t = procTable[i].sp;
+    restoreDataSegment();
+    te[i].sp = t;
+  }
+
+  errorMessage[0] = ' ';
+  errorMessage[1] = ':';
+  errorMessage[2] = ' ';
+  errorMessage[3] = '\0';
+  newline[0] = '\r';
+  newline[1] = '\n';
+  newline[2] = '\0';
+  for (i = 0; i < PROC_ENTRY_NUM; i++) {
+    convertIntToString(number, i );
+    printString(number);
+    printString(errorMessage);
+    convertIntToString(number, te[i].active );
+    printString(number);
+    printString(errorMessage);
+    convertIntToString(number, te[i].sp/0x100);
+    printString(number);
+    printString(errorMessage);
+    printString(newline);
+  }
+  errorMessage[0] = 'C';
+  errorMessage[1] = 'u';
+  errorMessage[2] = 'r';
+  errorMessage[3] = 'r';
+  errorMessage[4] = 'e';
+  errorMessage[5] = 'n';
+  errorMessage[6] = 't';
+  errorMessage[7] = ':';
+  errorMessage[8] = ' ';
+  errorMessage[9] = '\0';
+  printString(errorMessage);
+  convertIntToString(number, curProcUser);
+  printString(number);
+  printString(newline);
+
 }
