@@ -153,7 +153,17 @@ int div(int a, int b) {
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
-  if (ax == 0) {
+  char errorMsg[8];
+  errorMsg[0] = 'E';
+  errorMsg[1] = 'r';
+  errorMsg[2] = 'r';
+  errorMsg[3] = 'o';
+  errorMsg[4] = 'r';
+  errorMsg[5] = '!';
+  errorMsg[6] = '!';
+  errorMsg[7] = '\0';
+
+  if (ax == 0) { // printString
     printString(bx);
   } else if (ax == 1) {
     if (cx == 0) {
@@ -176,26 +186,30 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   } else if (ax == 8) {
     writeFile(bx, cx, dx);
   } else {
-    printString("Error!!!!!");
+    printString(errorMsg);
   }
 }
 
 void readFile(char *filename, char *buffer) {
-  int i, j;
+  int i, j, k;
   char directoryBuffer[512];
+  int bufferPointer = 0;
   int sectorPointer = 0;
   readSector(&directoryBuffer, 2);
 
   for (i = 0; i < 16; i++) {
     int match = 1;
     for (j = 0; j < 6; j++){
-      if (directoryBuffer[i*32 + j] != filename[j]){
+      if (directoryBuffer[i*32 + j] != filename[j]) {
         match = 0;
+        break;
+      }
+      if (directoryBuffer[i*32 + j] == 0) {
         break;
       }
     }
     if (match) {
-      sectorPointer = i*32+j;
+      sectorPointer = i*32+6;
       break;
     }
   }
@@ -206,8 +220,8 @@ void readFile(char *filename, char *buffer) {
   }
 
   while (directoryBuffer[sectorPointer] != 0) {
-    readSector(buffer, directoryBuffer[sectorPointer]);
-    buffer += 512;
+    readSector(buffer + bufferPointer, directoryBuffer[sectorPointer]);
+    bufferPointer += 512;
     sectorPointer++;
   }
 }
@@ -216,7 +230,6 @@ void executeProgram(char* name, int segment) {
   char programBuffer[13312];
   int programPointer;
   readFile(name, programBuffer);
-  /* '\3' means end of text. could be a bug. */
   for (programPointer = 0; programPointer <= 13312; programPointer++) {
     putInMemory(segment, programPointer, programBuffer[programPointer]);
   }
@@ -254,7 +267,13 @@ void deleteFile(char* name) {
   int i, j;
   char directoryBuffer[512];
   char mapBuffer[512];
+<<<<<<< HEAD
   int sectorPointer = 0;
+=======
+
+  int sectorPointer = 0;
+
+>>>>>>> zxqdx-new
   readSector(directoryBuffer, 2);
   readSector(mapBuffer, 1);
 
@@ -265,10 +284,17 @@ void deleteFile(char* name) {
         match = 0;
         break;
       }
+<<<<<<< HEAD
+=======
+      if (directoryBuffer[i*32 + j] == 0) {
+        break;
+      }
+>>>>>>> zxqdx-new
     }
     if (match) {
       sectorPointer = i*32+j;
       directoryBuffer[i*32] = 0x00;
+<<<<<<< HEAD
       break;
     }
   }
@@ -280,6 +306,17 @@ void deleteFile(char* name) {
     sectorPointer++;
   }
   writeSector(mapBuffer, 1);
+=======
+      writeSector(directoryBuffer, 2);
+      while (directoryBuffer[sectorPointer] != 0 && sectorPointer < i*32) {
+        mapBuffer[directoryBuffer[sectorPointer]] = 0x00;
+        sectorPointer++;
+      }
+      writeSector(mapBuffer, 1);
+      break;
+    }
+  }
+>>>>>>> zxqdx-new
 }
 
 void writeFile(char* name, char* buffer, int numberOfSectors) {
@@ -288,14 +325,33 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
   char mapBuffer[512];
   char sectorPointers[26];
   char errorMessage[10];
+<<<<<<< HEAD
   readSector(directoryBuffer, 2);
   readSector(mapBuffer, 1);
   
+=======
+  // char debug[3];
+  errorMessage[0] = 'F';
+  errorMessage[1] = 'i';
+  errorMessage[2] = 'l';
+  errorMessage[3] = 'e';
+  errorMessage[4] = ' ';
+  errorMessage[5] = 'f';
+  errorMessage[6] = 'u';
+  errorMessage[7] = 'l';
+  errorMessage[8] = 'l';
+  errorMessage[9] = '\0';
+
+  readSector(directoryBuffer, 2);
+  readSector(mapBuffer, 1);
+
+>>>>>>> zxqdx-new
   i = 0;
   for (j = 0 ; j < numberOfSectors; j++) {
     while(mapBuffer[i]!=0x00) {
       i++;
       if (i > 2880){
+<<<<<<< HEAD
         errorMessage[0] = 'D';
         errorMessage[1] = 'i';
         errorMessage[2] = 's';
@@ -306,11 +362,17 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
         errorMessage[7] = 'l';
         errorMessage[8] = 'l';
         errorMessage[9] = '\0';
+=======
+>>>>>>> zxqdx-new
         printString(errorMessage);
         return;
       }
     }
     sectorPointers[j] = i;
+<<<<<<< HEAD
+=======
+    i++;
+>>>>>>> zxqdx-new
   }
 
   i = 0;
@@ -319,6 +381,7 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
   }
 
   if (i > 512) {
+<<<<<<< HEAD
     errorMessage[0] = 'F';
     errorMessage[1] = 'i';
     errorMessage[2] = 'l';
@@ -329,12 +392,15 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     errorMessage[7] = 'l';
     errorMessage[8] = 'l';
     errorMessage[9] = '\0';
+=======
+>>>>>>> zxqdx-new
     printString(errorMessage);
     return;
   }
 
   flag = 0;
   for (j = 0; j < 6; j++) {
+<<<<<<< HEAD
     if(name[j] == '\0') {
       flag = 1;
     }
@@ -350,11 +416,36 @@ void writeFile(char* name, char* buffer, int numberOfSectors) {
     directoryBuffer[i+j+6] = sectorPointers[j];
     writeSector(buffer, sectorPointers[j]);
     buffer+=512;
+=======
+    if (name[j] == '\0') {
+      flag = 1;
+    }
+    if (flag == 0) {
+      directoryBuffer[i+j] = name[j];
+    } else {
+      directoryBuffer[i+j] = '\0';
+    }
+  }
+
+  // debug[0] = 48 + numberOfSectors;
+  // debug[1] = 's';
+  // debug[2] = '\0';
+  // printString(debug);
+  for (j = 0; j < numberOfSectors; j++) {
+    mapBuffer[sectorPointers[j]] = 0xFF;
+    directoryBuffer[i+j+6] = sectorPointers[j];
+    writeSector(buffer, sectorPointers[j]);
+    buffer += 512;
+>>>>>>> zxqdx-new
   }
 
   writeSector(directoryBuffer, 2);
   writeSector(mapBuffer, 1);
+<<<<<<< HEAD
 }
 
 
 
+=======
+}
+>>>>>>> zxqdx-new

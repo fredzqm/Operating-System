@@ -3,7 +3,7 @@ Team members: tandoni yangr zhangq2 zhangx2
 
 ========= Usage =========
 You can building executable files with make.
-make -- create everything
+make -- create everything, and load into floppya.img
 After you have everything component built, you can use "make run" to run the program.
 
 Alternatively, you can build each component one by one.
@@ -11,6 +11,10 @@ make bootload -- create bootload
 make kernel -- crate kernel
 make loadFile -- create loadFile
 make shell -- create shell
+make load -- load files into floppya.img
+
+After you finish testing, you can run
+make clean -- clean assembly and object files
 
 ========= What we did =========
 --------- Milestone 3 ---------
