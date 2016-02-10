@@ -73,6 +73,7 @@ int main() {
 void handleInput(char *input) {
   char commandName[512];
   char commandArg[512];
+  char commandArg2[512];
 
   char commandType[5];
   char commandCat[4];
@@ -80,9 +81,12 @@ void handleInput(char *input) {
   char commandRm[3];
   char commandExecute[8];
   char commandCreate[7];
+  char commandTouch[6];
   char commandKill[5];
   char commandCopy[5];
+  char commandCp[3];
   char commandDir[4];
+  char commandLs[3];
   char badCommand[13];
   char commandCd[3];
   char commandQuit[5];
@@ -140,16 +144,31 @@ void handleInput(char *input) {
   commandCreate[5] = 'e';
   commandCreate[6] = '\0';
 
+  commandTouch[0] = 't';
+  commandTouch[1] = 'o';
+  commandTouch[2] = 'u';
+  commandTouch[3] = 'c';
+  commandTouch[4] = 'h';
+  commandTouch[5] = '\0';
+  
   commandCopy[0] = 'c';
   commandCopy[1] = 'o';
   commandCopy[2] = 'p';
   commandCopy[3] = 'y';
   commandCopy[4] = '\0';
 
+  commandCp[0] = 'c';
+  commandCp[1] = 'p';
+  commandCp[2] = '\0';
+
   commandDir[0] = 'd';
   commandDir[1] = 'i';
   commandDir[2] = 'r';
   commandDir[3] = '\0';
+
+  commandLs[0] = 'l';
+  commandLs[1] = 's';
+  commandLs[2] = '\0';
 
   commandCd[0] = 'c';
   commandCd[1] = 'd';
@@ -203,6 +222,7 @@ void handleInput(char *input) {
   helpFileName[6] = 'x';
   helpFileName[7] = '\0';
 
+  /* process command line input */
   while (*input != ' ' && *input != '\r' && *input != '\n' && *input != '\0') {
     commandName[pointer] = *input;
     input++;
@@ -212,12 +232,21 @@ void handleInput(char *input) {
 
   input++;
   pointer = 0;
-  while (*input != '\r' && *input != '\n' && *input != '\0') {
+  while (*input != ' ' && *input != '\r' && *input != '\n' && *input != '\0') {
     commandArg[pointer] = *input;
     input++;
     pointer++;
   }
   commandArg[pointer] = '\0';
+
+  input++;
+  pointer = 0;
+  while (*input != ' ' && *input != '\r' && *input != '\n' && *input != '\0') {
+    commandArg2[pointer] = *input;
+    input++;
+    pointer++;
+  }
+  commandArg2[pointer] = '\0';
 
   if (compareStr(commandName, commandType) == 1) {
     cat(commandArg);
@@ -230,6 +259,8 @@ void handleInput(char *input) {
   } else if (compareStr(commandName, commandRm) == 1) {
     deleteFile(commandArg); /* delete file*/
   } else if (compareStr(commandName, commandCreate) == 1) {
+    touch(commandArg); /* create file*/
+  } else if (compareStr(commandName, commandTouch) == 1) {
     touch(commandArg); /* create file*/
   } else if (compareStr(commandName, commandKill) == 1) {
     kill((int) commandArg[0] - 48);/* kill process*/
@@ -244,30 +275,17 @@ void handleInput(char *input) {
   } else if (compareStr(commandName, commandPs) == 1) {
     ps();
   } else if (compareStr(commandName, commandCopy) == 1) {
-    char arg1[512];
-    char arg2[512];
-    int ptr = 0;
-    int ptrArg2 = 0;
-
-
-    while(commandArg[ptr] != ' ') {
-      arg1[ptr] = commandArg[ptr];
-      ptr++;
-    }
-    arg1[ptr] = '\0';
-    ptr++;
-    while(commandArg[ptr] != '\0' && commandArg[ptr] != '\r' &&
-          commandArg[ptr] != '\n' && commandArg[ptr] != ' ') {
-      arg2[ptrArg2] = commandArg[ptr];
-      ptr++;
-      ptrArg2++;
-    }
-    arg2[ptrArg2] = '\0';
-    cp(arg1, arg2);
+    cp(commandArg, commandArg2);
+  } else if (compareStr(commandName, commandCp) == 1) {
+    cp(commandArg, commandArg2);
   } else if (compareStr(commandName, commandDir) == 1) {
+    ls();
+  } else if (compareStr(commandName, commandLs) == 1) {
     ls();
   } else if (compareStr(commandName, commandCd) == 1) {
     cd(commandType);
+  // } else if (compareStr(commandName, commandMkdir) == 1) {
+    // mkdir(commandType);
   } else {
     char commandArg[512];
     badCommand[0] = 'B';

@@ -349,8 +349,9 @@ void handleTimerInterrupt(int segment, int sp) {
   }
 
   for (count = 0; count <= PROC_ENTRY_NUM; count++) {
-    curProcUser = (curProcUser + 1) % 8;
+    curProcUser = (curProcUser + 1) % PROC_ENTRY_NUM;
 
+    /* TODO: Not very efficient, wait to be changed */
     wait = procTable[curProcUser].waiting;
     if (wait != -1) { /* Current process is waiting for `wait` */
       parentWait = procTable[wait].waiting;
@@ -365,7 +366,7 @@ void handleTimerInterrupt(int segment, int sp) {
       curProcSpUser = procTable[curProcKernel].sp;
       break;
     }
-}
+  }
   restoreDataSegment();
   returnFromTimer(curProcSegUser, curProcSpUser);
 }
