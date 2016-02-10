@@ -1,4 +1,5 @@
-/* @Copyright Team-2D
+/*
+  @Copyright Team-2D
   Team members: tandoni yangr zhangq2 zhangx2
 */
 #define FILE_NAME_LENGTH 6
@@ -18,47 +19,47 @@ typedef struct {
   int isExecutable;
 } File;
 
-// M5 Step 8
+/* M5 Step 8 */
 typedef struct {
-  int active; // 1=active, 0=inactive
-  int sp; // stack pointer
-  int waiting;
+  int active; /* 1=active, 0=inactive */
+  int sp; /* stack pointer */
+  int waiting; /* >=0 waiting, -1=not waiting */
 } ProcEntry;
 ProcEntry procTable[PROC_ENTRY_NUM];
 int curProcKernel;
 
 int roundRobin[PROC_ENTRY_NUM];
 
-// defined sys calls
+/* defined sys calls */
 void handleInterrupt21(int, int, int, int);
-// standard IO
+/* standard IO */
 void printString(char *chars);
 void readString(char *chars);
-// sectors IO
+/* sectors IO */
 void readSector(char *chars, int);
 void writeSector(char *chars, int);
-// file IO
+/* file IO */
 void writeFile(char* name, char* buffer, int numberOfSectors, int dirID);
 void readFile(char *filename, char *buffer, int dirID);
 void deleteFile(char* name, int dirID);
-// program management
-int runProgram(char* name, int segment, int dirID);
+/* program management */
+int runProgram(char* name, int dirID);
 void terminate();
 void clear();
 
 int searchDirectory(char *directoryBuffer, char *name);
 void scanDirectory(int dirID, File* fileInfo, int* fileNum);
 
-// Process management
+/* Process management */
 void killProcess(int id);
 
-// Handle timer interrupt
+/* Handle timer interrupt */
 void handleTimerInterrupt(int segment, int sp);
 
 void shellWait(int process);
 
 
-// Utilities
+/* Utilities */
 int mod(int a, int b);
 int div(int a, int b);
 void convertIntToString(char* buffer, int n);
@@ -84,8 +85,8 @@ int main() {
 
   /* Test readString */
   /* printString("Enter a line: \0"); */
-  // readString(line); 
-  // printString(line);
+  /* readString(line);  */
+  /* printString(line); */
 
   /* Add more space */
   /* printString("\r\n"); */
@@ -110,7 +111,7 @@ int main() {
   for (i = 0; i < PROC_ENTRY_NUM; i++) {
     procTable[i].active = 0;
     procTable[i].sp = 0xFF00;
-    procTable[i].waiting = 0;
+    procTable[i].waiting = -1;
   }
   curProcKernel = 0;
 
@@ -125,7 +126,7 @@ int main() {
 }
 
 void handleInterrupt21(int ax, int bx, int cx, int dx) {
-  if (ax == 0) { // printString
+  if (ax == 0) { /* printString */
     printString(bx);
   } else if (ax == 1) {
     if (cx == 0) {
@@ -138,7 +139,7 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   } else if (ax == 3) {
     readFile(bx, cx, ROOT_SECTOR);
   } else if (ax == 4) {
-    runProgram(bx, cx, ROOT_SECTOR);
+    runProgram(bx, ROOT_SECTOR);
   } else if (ax == 5) {
     terminate();
   } else if (ax == 6) {
@@ -152,9 +153,11 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
   } else if (ax == 10) {
     killProcess(bx);
   } else if (ax == 11) {
-    shellWait(runProgram(bx, cx, ROOT_SECTOR));
+    shellWait(runProgram(bx, ROOT_SECTOR));
   } else if (ax == 12) {
     clear();
+  } else if (ax == 13) {
+    printProcTable();
   } else {
     char errorMsg[8];
     errorMsg[0] = 'E';
@@ -248,7 +251,7 @@ void readSector(char *chars, int sector) {
 }
 
 void readFile(char *filename, char *buffer, int dirID) {
-  // int i, j, k;
+  /* int i, j, k; */
   int entryOffset;
   char directoryBuffer[SECTOR_SIZE];
   int bufferPointer = 0;
@@ -289,7 +292,7 @@ void readFile(char *filename, char *buffer, int dirID) {
   }
 }
 
-int runProgram(char* name, int segment, int dirID) {
+int runProgram(char* name, int dirID) {
   char errorMessage[10];
   char number[10];
   char newline[3];
@@ -302,7 +305,7 @@ int runProgram(char* name, int segment, int dirID) {
   setKernelDataSegment();
 
   for (i = 0; i < PROC_ENTRY_NUM; i++) {
-    if(procTable[i].active == 0 && procTable[i].waiting == 0) {
+    if (procTable[i].active == 0 && procTable[i].waiting == -1) {
       procTable[i].sp = 0xFF00;
       t = i;
       break;
@@ -311,10 +314,10 @@ int runProgram(char* name, int segment, int dirID) {
 
   restoreDataSegment();
 
-  // convertIntToString(number, t);
-  // number[1] = ' ';
-  // number[2] = '\0';
-  // printString(number);
+  /* convertIntToString(number, t); */
+  /* number[1] = ' '; */
+  /* number[2] = '\0'; */
+  /* printString(number); */
 
   segment2 = (t + 2) * 0x1000;
   for (i = 0; i <= 13312; i++) {
@@ -323,7 +326,6 @@ int runProgram(char* name, int segment, int dirID) {
   initializeProgram(segment2);
   setKernelDataSegment();
   procTable[t].active = 1;
-  t = curProcKernel;
   restoreDataSegment();
   return t;
 }
@@ -350,12 +352,12 @@ void handleTimerInterrupt(int segment, int sp) {
     curProcUser = (curProcUser + 1) % 8;
 
     wait = procTable[curProcUser].waiting;
-    if(wait != 0) {
-        parentWait = procTable[wait].waiting;
-        if (!procTable[wait].active && !procTable[parentWait].waiting) {
-            procTable[curProcUser].waiting = 0;
-            procTable[curProcUser].active = 1;
-        }
+    if (wait != -1) { /* Current process is waiting for `wait` */
+      parentWait = procTable[wait].waiting;
+      if (!procTable[wait].active && parentWait == -1) {
+        procTable[curProcUser].waiting = -1;
+        procTable[curProcUser].active = 1;
+      }
     }
     if (procTable[curProcUser].active == 1) {
       curProcKernel = curProcUser;
@@ -370,23 +372,22 @@ void handleTimerInterrupt(int segment, int sp) {
 
 
 void terminate() {
-  // int i;
-  // char shell[6];
-  // shell[0] = 't';
-  // shell[1] = 'e';
-  // shell[2] = 'r';
-  // shell[3] = '\n';
-  // shell[4] = '\r';
-  // shell[5] = '\0';
-  // printString(shell);
-
+  /* int i; */
+  /* char shell[6]; */
+  /* shell[0] = 't'; */
+  /* shell[1] = 'e'; */
+  /* shell[2] = 'r'; */
+  /* shell[3] = '\n'; */
+  /* shell[4] = '\r'; */
+  /* shell[5] = '\0'; */
+  /* printString(shell); */
   setKernelDataSegment();
   procTable[curProcKernel].active = 0;
   restoreDataSegment();
   while(1);
-  // for (i = 0 ; i < -1; i++);
-  // runProgram(shell);
-  // interrupt(0x21, 4, shell, 0x2000, 0);
+  /* for (i = 0 ; i < -1; i++); */
+  /* runProgram(shell); */
+  /* interrupt(0x21, 4, shell, 0x2000, 0); */
 }
 
 void writeSector(char *chars, int sector) {
@@ -409,7 +410,7 @@ void deleteFile(char* name, int dirID) {
   int entryOffset, j;
   char directoryBuffer[SECTOR_SIZE];
   char mapBuffer[SECTOR_SIZE];
-  // int sectorPointer = 0;
+  /* int sectorPointer = 0; */
   readSector(directoryBuffer, dirID);
   readSector(mapBuffer, MAP_SECTOR);
 
@@ -454,14 +455,14 @@ void writeFile(char* name, char* buffer, int numberOfSectors, int dirID) {
   char mapBuffer[SECTOR_SIZE];
   char sectorPointers[26];
   char errorMessage[19];
-  // char debug[3];
+  /* char debug[3]; */
   
   readSector(directoryBuffer, ROOT_SECTOR);
 
-  // try to see if this file already exists
+  /* try to see if this file already exists */
   entryOffset = searchDirectory(directoryBuffer, name);
   if (entryOffset < 0) { 
-    // find an empty entry to store file info
+    /* find an empty entry to store file info */
     i = findEmptyEntry(directoryBuffer);
     if (i < 0) {
       errorMessage[0] = 'F';
@@ -481,7 +482,7 @@ void writeFile(char* name, char* buffer, int numberOfSectors, int dirID) {
   }
 
   readSector(mapBuffer, MAP_SECTOR);
-  // find enough sectors for storage
+  /* find enough sectors for storage */
   i = 0;
   for (j = 0 ; j < numberOfSectors; j++) {
     while(mapBuffer[i]!=0x00) {
@@ -505,7 +506,7 @@ void writeFile(char* name, char* buffer, int numberOfSectors, int dirID) {
     i++;
   }
 
-  // write file name, and append '\0' at the end if there is space
+  /* write file name, and append '\0' at the end if there is space */
   for (j = 0; j < FILE_NAME_LENGTH; j++) {
     directoryBuffer[entryOffset+j] = name[j];
     if (name[j] == '\0') {
@@ -513,24 +514,24 @@ void writeFile(char* name, char* buffer, int numberOfSectors, int dirID) {
     }
   }
 
-  // write data into sectors
+  /* write data into sectors */
   for (j = 0; j < numberOfSectors; j++) {
     mapBuffer[sectorPointers[j]] = 0xFF;
     directoryBuffer[entryOffset+FILE_NAME_LENGTH+j] = sectorPointers[j];
     writeSector(buffer, sectorPointers[j]);
     buffer += SECTOR_SIZE;
   }
-  directoryBuffer[entryOffset+FILE_NAME_LENGTH+numberOfSectors] = 0; // end the sector pointer sequence
+  directoryBuffer[entryOffset+FILE_NAME_LENGTH+numberOfSectors] = 0; /* end the sector pointer sequence */
   
-  // write back root directory and map
+  /* write back root directory and map */
   writeSector(directoryBuffer, ROOT_SECTOR);
   writeSector(mapBuffer, MAP_SECTOR);
 }
 
 int findEmptyEntry(char* directoryBuffer) {
   int i;
-  // Do not use i = 0!
-  // When i == 0, he first 32 bytes contain information about this directory
+  /* Do not use i = 0! */
+  /* When i == 0, he first 32 bytes contain information about this directory */
   for (i = 32; i < SECTOR_SIZE; i+= FILE_ENTRY_LENGTH) {
     if (directoryBuffer[i] == 0) {
       return i;
@@ -565,7 +566,7 @@ void scanDirectory(int dirID, File* fileInfo, int* fileNum) {
   int entry, flag;
   char directoryBuffer[SECTOR_SIZE];
   readSector(directoryBuffer, dirID);
-  // interrupt(0x21, 2, directoryBuffer, 2, 0);
+  /* interrupt(0x21, 2, directoryBuffer, 2, 0); */
   for (entry = 0; entry < 16; entry++) {
     char filename[7];
     char number[50];
@@ -618,10 +619,10 @@ void convertIntToString(char* buffer, int n) {
 }
 
 void shellWait(int process) {
-     setKernelDataSegment();
-     procTable[0].waiting = process;
-     procTable[0].active = 0;
-     restoreDataSegment();
+   setKernelDataSegment();
+   procTable[0].waiting = process;
+   procTable[0].active = 0;
+   restoreDataSegment();
 }
 
 int mod(int a, int b) {
@@ -646,14 +647,14 @@ void printProcTable() {
   char programBuffer[13312];
   ProcEntry te[PROC_ENTRY_NUM];
   int i, t, current, curProcUser;
-  
-  // ------------ print proc table out
+
+  /* ------------ print proc table out */
   for (i = 0; i < PROC_ENTRY_NUM; i++) {
     setKernelDataSegment();
     t = procTable[i].active;
-    restoreDataSegment();
+    /* restoreDataSegment(); */
     te[i].active = t ;
-    setKernelDataSegment();
+    /* setKernelDataSegment(); */
     t = procTable[i].sp;
     restoreDataSegment();
     te[i].sp = t;
@@ -678,7 +679,7 @@ void printProcTable() {
     printString(errorMessage);
     printString(newline);
   }
-  errorMessage[0] = 'C';
+/*  errorMessage[0] = 'C';
   errorMessage[1] = 'u';
   errorMessage[2] = 'r';
   errorMessage[3] = 'r';
@@ -689,8 +690,9 @@ void printProcTable() {
   errorMessage[8] = ' ';
   errorMessage[9] = '\0';
   printString(errorMessage);
-  convertIntToString(number, curProcUser);
+  setKernelDataSegment();
+  convertIntToString(number, curProcKernel);
+  restoreDataSegment();
   printString(number);
-  printString(newline);
-
+  printString(newline); */
 }

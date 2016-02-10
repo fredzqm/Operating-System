@@ -9,7 +9,7 @@
 
 void handleInput(char *input);
 
-// variable functionality we implemented
+/* variable functionality we implemented*/
 void cat(char* filename);
 void touch(char* filename);
 void cp(char* filename1, char* filename2);
@@ -17,8 +17,7 @@ void exec(char* filename);
 void ls();
 void cd(char* commandType);
 
-
-// syscall methods, implemented with interrupt
+/* syscall methods, implemented with interrupt*/
 void printString(char *chars);
 void readString(char *chars, int* readSize);
 void writeFile(char* filename, char* buffer, int numberOfSectors);
@@ -29,9 +28,10 @@ void execforeground(char* filename);
 void kill(int id);
 void terminate();
 void clear();
+void ps();
 
 
-// helper methods
+/* helper methods*/
 int sizeOfSector(char* filename);
 void convertIntToString(char* buffer, int);
 int compareStr(char *a, char *b);
@@ -66,7 +66,7 @@ int main() {
     printString(newLine);
     handleInput(buffer);
     printString(newLine);
-    // terminate();
+    /* terminate();*/
   }
 }
 
@@ -85,9 +85,10 @@ void handleInput(char *input) {
   char commandDir[4];
   char badCommand[13];
   char commandCd[3];
-  char commandQuit[5];  
+  char commandQuit[5];
   char commandClear[6];
   char commandHelp[5];
+  char commandPs[3];
   char commandExeforeground[15];
   int pointer = 0;
 
@@ -130,7 +131,7 @@ void handleInput(char *input) {
   commandRm[0] = 'r';
   commandRm[1] = 'm';
   commandRm[2] = '\0';
-  
+
   commandCreate[0] = 'c';
   commandCreate[1] = 'r';
   commandCreate[2] = 'e';
@@ -189,6 +190,10 @@ void handleInput(char *input) {
   commandHelp[3] = 'p';
   commandHelp[4] = '\0';
 
+  commandPs[0] = 'p';
+  commandPs[1] = 's';
+  commandPs[2] = '\0';
+
   helpFileName[0] = 'h';
   helpFileName[1] = 'e';
   helpFileName[2] = 'l';
@@ -221,13 +226,13 @@ void handleInput(char *input) {
   } else if (compareStr(commandName, commandExecute) == 1) {
     executeFile(commandArg);
   } else if (compareStr(commandName, commandDelete) == 1) {
-    deleteFile(commandArg); // delete file
+    deleteFile(commandArg); /* delete file*/
   } else if (compareStr(commandName, commandRm) == 1) {
-    deleteFile(commandArg); // delete file
+    deleteFile(commandArg); /* delete file*/
   } else if (compareStr(commandName, commandCreate) == 1) {
-    touch(commandArg); // create file
+    touch(commandArg); /* create file*/
   } else if (compareStr(commandName, commandKill) == 1) {
-    kill((int) commandArg[0] - 48);// kill process
+    kill((int) commandArg[0] - 48);/* kill process*/
   } else if (compareStr(commandName, commandQuit) == 1) {
     terminate();
   } else if (compareStr(commandName, commandClear) == 1) {
@@ -236,6 +241,8 @@ void handleInput(char *input) {
     execforeground(commandArg);
   } else if (compareStr(commandName, commandHelp) == 1) {
     cat(helpFileName);
+  } else if (compareStr(commandName, commandPs) == 1) {
+    ps();
   } else if (compareStr(commandName, commandCopy) == 1) {
     char arg1[512];
     char arg2[512];
@@ -297,13 +304,13 @@ void touch(char* filename) {
   promptLine[1] = ' ';
   promptLine[2] = '\0';
 
-  printString(promptLine); // print prompt 
-  readString(buf + count, &readStringSize); // read input
+  printString(promptLine); /* print prompt */
+  readString(buf + count, &readStringSize); /* read input*/
   while(readStringSize != 0) {
     count += readStringSize + 2;
-    printString(newLine); // print a new
-    printString(promptLine); // print prompt
-    readString(buf + count, &readStringSize); // read input
+    printString(newLine); /* print a new*/
+    printString(promptLine); /* print prompt*/
+    readString(buf + count, &readStringSize); /* read input*/
   }
   buf[count - 2] = '\0';
   writeFile(filename, buf, count/SECTOR_SIZE + 1);
@@ -358,7 +365,7 @@ int sizeOfSector(char* filename) {
   char directoryBuffer[SECTOR_SIZE];
   int sectorPointer = 0;
 
-  interrupt(0x21, 2, &directoryBuffer, 2, 0); // readSector
+  interrupt(0x21, 2, &directoryBuffer, 2, 0); /* readSector*/
 
   for (i = 0; i < 16; i++) {
     int match = 1;
@@ -389,11 +396,6 @@ int sizeOfSector(char* filename) {
 
   return count;
 }
-
-
-
-
-
 
 
 void convertIntToString(char* buffer, int n) {
@@ -447,45 +449,49 @@ int mod(int a, int b) {
 
 
 
-// ----------- standard IO
-void printString(char *chars) { // make a sys call to kernel 
-  interrupt(0x21, 0, chars, 0, 0); //print the prompt
+/* ----------- standard IO*/
+void printString(char *chars) { /* make a sys call to kernel */
+  interrupt(0x21, 0, chars, 0, 0); /*print the prompt*/
 }
 
-void readString(char *chars, int* readSize) { // make a sys call to kernel 
-  interrupt(0x21, 1, chars, readSize, 0); // read the instruction 
+void readString(char *chars, int* readSize) { /* make a sys call to kernel */
+  interrupt(0x21, 1, chars, readSize, 0); /* read the instruction */
 }
 
-// ----------- File IO
-void writeFile(char* filename, char* buffer, int numberOfSectors) { // make a sys call to kernel 
-  interrupt(0x21, 8, filename, buffer, numberOfSectors); // writeFile
+/* ----------- File IO*/
+void writeFile(char* filename, char* buffer, int numberOfSectors) { /* make a sys call to kernel */
+  interrupt(0x21, 8, filename, buffer, numberOfSectors); /* writeFile*/
 }
 
-void readFile(char *filename, char *buffer) { // make a sys call to kernel 
-  interrupt(0x21, 3, filename, buffer, 0); // readFile
+void readFile(char *filename, char *buffer) { /* make a sys call to kernel */
+  interrupt(0x21, 3, filename, buffer, 0); /* readFile*/
 }
 
-void deleteFile(char* filename) { // make a sys call to kernel 
-  interrupt(0x21, 7, filename, 0, 0); // delete file
+void deleteFile(char* filename) { /* make a sys call to kernel */
+  interrupt(0x21, 7, filename, 0, 0); /* delete file*/
 }
 
-void executeFile(char* filename) { // make a sys call to kernel
-  interrupt(0x21, 4, filename, 0x2000, 0); // execute file at 0x2000 segment
+void executeFile(char* filename) { /* make a sys call to kernel*/
+  interrupt(0x21, 4, filename, 0x2000, 0); /* execute file at 0x2000 segment*/
 }
 
-void execforeground(char* filename) { // make a sys call to kernel
-  interrupt(0x21, 11, filename, 0x2000, 0); // execute file at 0x2000 segment
+void execforeground(char* filename) { /* make a sys call to kernel*/
+  interrupt(0x21, 11, filename, 0x2000, 0); /* execute file at 0x2000 segment*/
 }
 
-// ----------- Process control
+/* ----------- Process control*/
 void kill(int id) {
   interrupt(0x21, 10, id, 0, 0);
 }
 
-void terminate() { // make a sys call to kernel 
-  interrupt(0x21, 5, 0, 0, 0); // exit, then the kernel will reload the shell
+void terminate() { /* make a sys call to kernel */
+  interrupt(0x21, 5, 0, 0, 0); /* exit, then the kernel will reload the shell*/
 }
 
 void clear() {
-  interrupt(0x21, 12, 0, 0, 0); 
-} 
+  interrupt(0x21, 12, 0, 0, 0);
+}
+
+void ps() {
+  interrupt(0x21, 13, 0, 0, 0); /* Print process table */
+}

@@ -7,24 +7,15 @@ void handleInput(char *name);
 int compareStr(char *a, char *b);
 void copyFile(char* filename1, char* filename2);
 int sizeOfSector(char* filename);
-<<<<<<< HEAD
-
-char newLine[3];
-=======
 void convertIntToString(char* buffer, int);
 int mod(int a, int b);
 
 char newLine[3];
 char deliminator[4];
->>>>>>> zxqdx-new
 
 int main() {
   char prompt[4];
   char buffer[512];
-<<<<<<< HEAD
-  // char newLine[3];
-=======
->>>>>>> zxqdx-new
 
   prompt[0] = 'A';
   prompt[1] = ':';
@@ -41,22 +32,12 @@ int main() {
   newLine[2] = '\0';
 
   while (1) {
-<<<<<<< HEAD
-    interrupt(0x21, 0, prompt, 0, 0); // give prompt
-    interrupt(0x21, 1, buffer, 0, 0); // read instruction
-    // interrupt(0x21, 0, buffer, 0, 0);
-    interrupt(0x21, 0, newLine, 0, 0);
-    handleInput(buffer);
-    interrupt(0x21, 0, newLine, 0, 0);
-    interrupt(0x21, 5, 0, 0, 0);
-=======
     interrupt(0x21, 0, prompt, 0, 0); // print the prompt
     interrupt(0x21, 1, buffer, 0, 0); // read the instruction
     interrupt(0x21, 0, newLine, 0, 0); // print a new line
     handleInput(buffer); // handle the command
     interrupt(0x21, 0, newLine, 0, 0); // print a new line
     interrupt(0x21, 5, 0, 0, 0); // exit, then the kernel will reload the shell
->>>>>>> zxqdx-new
   }
 }
 
@@ -69,14 +50,10 @@ void handleInput(char *input) {
   char commandDelete[7];
   char commandExecute[8];
   char commandCreate[7];
-<<<<<<< HEAD
-=======
   char commandCopy[5];
   char commandDir[4];
->>>>>>> zxqdx-new
   char promptLine[3];
   char badCommand[13];
-  char commandCopy[5];
   int pointer = 0;
 
   badCommand[0] = 'B';
@@ -130,14 +107,11 @@ void handleInput(char *input) {
   commandCopy[3] = 'y';
   commandCopy[4] = '\0';
 
-<<<<<<< HEAD
-=======
   commandDir[0] = 'd';
   commandDir[1] = 'i';
   commandDir[2] = 'r';
   commandDir[3] = '\0';
 
->>>>>>> zxqdx-new
   promptLine[0] = '>';
   promptLine[1] = ' ';
   promptLine[2] = '\0';
@@ -162,29 +136,6 @@ void handleInput(char *input) {
     interrupt(0x21, 3, commandArg, buf, 0); // read file
     interrupt(0x21, 0, buf, 0, 0);  // print file
   } else if (compareStr(commandName, commandExecute) == 1) {
-<<<<<<< HEAD
-    interrupt(0x21, 4, commandArg, 0x2000, 0);
-  } else if (compareStr(commandName, commandDelete) == 1) {
-    interrupt(0x21, 7, commandArg, 0, 0);
-  } else if (compareStr(commandName, commandCreate) == 1) {
-    int count = 0;
-    int readStringSize = 0;
-    interrupt(0x21, 0, promptLine, 0, 0);
-    interrupt(0x21, 1, buf + count, &readStringSize, 0);
-    while(readStringSize != 0) {
-      count += readStringSize + 2;
-      interrupt(0x21, 0, newLine, 0, 0);
-      interrupt(0x21, 0, promptLine, 0, 0);
-      interrupt(0x21, 1, buf + count, &readStringSize, 0);
-    }
-    buf[count - 2] = '\0';
-    interrupt(0x21, 8, commandArg, buf, count/512 + 1);
-  } else if (compareStr(commandName, commandCopy) == 1) {
-    char arg1[6];
-    char arg2[6];
-    int ptr = 0;
-    int ptrArg2 = 0;
-=======
     interrupt(0x21, 4, commandArg, 0x2000, 0); // execute file
   } else if (compareStr(commandName, commandDelete) == 1) {
     interrupt(0x21, 7, commandArg, 0, 0); // delete file
@@ -210,27 +161,19 @@ void handleInput(char *input) {
     // interrupt(0x21, 0, commandArg, 0, 0);
     // interrupt(0x21, 0, newLine, 0, 0);
 
->>>>>>> zxqdx-new
     while(commandArg[ptr] != ' ') {
       arg1[ptr] = commandArg[ptr];
       ptr++;
     }
     arg1[ptr] = '\0';
     ptr++;
-<<<<<<< HEAD
-    while(commandArg[ptr] != '\0') {
-=======
     while(commandArg[ptr] != '\0' && commandArg[ptr] != '\r' &&
           commandArg[ptr] != '\n' && commandArg[ptr] != ' ') {
->>>>>>> zxqdx-new
       arg2[ptrArg2] = commandArg[ptr];
       ptr++;
       ptrArg2++;
     }
     arg2[ptrArg2] = '\0';
-<<<<<<< HEAD
-    copyFile(arg1, arg2);
-=======
     // interrupt(0x21, 0, arg1, 0, 0);
     // interrupt(0x21, 0, deliminator, 0, 0);
     // interrupt(0x21, 0, arg2, 0, 0);
@@ -266,7 +209,6 @@ void handleInput(char *input) {
       interrupt(0x21, 0, number, 0, 0);
       interrupt(0x21, 0, newLine, 0, 0);
     }
->>>>>>> zxqdx-new
   } else {
     // int t;
     // int TEST_SIZE = 1000;
@@ -304,24 +246,6 @@ int compareStr(char *a, char *b) {
 
 void copyFile(char* filename1, char* filename2) {
   char buffer[13312];
-<<<<<<< HEAD
-  int sizeOfSec = sizeOfSector(filename1);
-  interrupt(0x21, 3, filename1, buffer);
-  interrupt(0x21, 8, filename2, buffer, sizeOfSec);
-}
-
-int sizeOfSector(char* filename) {
-    char buffer[13312];
-    int i = 0;
-    interrupt(0x21, 3, filename, buffer);
-    while(buffer[i] != '\0') {
-      i++;
-    }
-    return i/512 + 1;
-}
-
-
-=======
   char num[10];
   interrupt(0x21, 3, filename1, buffer, 0); // readFile
   interrupt(0x21, 8, filename2, buffer, sizeOfSector(filename1)); // writeFile
@@ -395,4 +319,3 @@ int mod(int a, int b) {
   }
   return a;
 }
->>>>>>> zxqdx-new
