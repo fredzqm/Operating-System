@@ -284,8 +284,6 @@ void handleInput(char *input) {
     ls();
   } else if (compareStr(commandName, commandCd) == 1) {
     cd(commandType);
-  // } else if (compareStr(commandName, commandMkdir) == 1) {
-    // mkdir(commandType);
   } else {
     char commandArg[512];
     badCommand[0] = 'B';

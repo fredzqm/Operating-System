@@ -653,9 +653,9 @@ void printProcTable() {
   for (i = 0; i < PROC_ENTRY_NUM; i++) {
     setKernelDataSegment();
     t = procTable[i].active;
-    /* restoreDataSegment(); */
+    restoreDataSegment(); 
     te[i].active = t ;
-    /* setKernelDataSegment(); */
+    setKernelDataSegment(); 
     t = procTable[i].sp;
     restoreDataSegment();
     te[i].sp = t;
