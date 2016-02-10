@@ -1,0 +1,11 @@
+type: prints out files
+create: creates file
+execute: executes a program
+delete: deletes a file
+kill: kills a process
+copy: copies a file
+dir: lists all files in directory
+quit: quits the shell
+clear: clears the scren
+execforeground: waits for the program to terminate and then returns to shell
+help: lists all commands

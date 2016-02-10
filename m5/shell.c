@@ -87,8 +87,11 @@ void handleInput(char *input) {
   char commandCd[3];
   char commandQuit[5];  
   char commandClear[6];
+  char commandHelp[5];
   char commandExeforeground[15];
   int pointer = 0;
+
+  char helpFileName[8];
 
   commandType[0] = 't';
   commandType[1] = 'y';
@@ -180,6 +183,21 @@ void handleInput(char *input) {
   commandExeforeground[13] = 'd';
   commandExeforeground[14] = '\0';
 
+  commandHelp[0] = 'h';
+  commandHelp[1] = 'e';
+  commandHelp[2] = 'l';
+  commandHelp[3] = 'p';
+  commandHelp[4] = '\0';
+
+  helpFileName[0] = 'h';
+  helpFileName[1] = 'e';
+  helpFileName[2] = 'l';
+  helpFileName[3] = 'p';
+  helpFileName[4] = '.';
+  helpFileName[5] = 't';
+  helpFileName[6] = 'x';
+  helpFileName[7] = '\0';
+
   while (*input != ' ' && *input != '\r' && *input != '\n' && *input != '\0') {
     commandName[pointer] = *input;
     input++;
@@ -216,6 +234,8 @@ void handleInput(char *input) {
     clear();
   } else if (compareStr(commandName, commandExeforeground) == 1) {
     execforeground(commandArg);
+  } else if (compareStr(commandName, commandHelp) == 1) {
+    cat(helpFileName);
   } else if (compareStr(commandName, commandCopy) == 1) {
     char arg1[512];
     char arg2[512];
