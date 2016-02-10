@@ -22,6 +22,7 @@ typedef struct {
 typedef struct {
   int active; // 1=active, 0=inactive
   int sp; // stack pointer
+  int waiting;
 } ProcEntry;
 ProcEntry procTable[PROC_ENTRY_NUM];
 int curProcKernel;
@@ -41,8 +42,9 @@ void writeFile(char* name, char* buffer, int numberOfSectors, int dirID);
 void readFile(char *filename, char *buffer, int dirID);
 void deleteFile(char* name, int dirID);
 // program management
-void runProgram(char* name, int segment, int dirID);
+int runProgram(char* name, int segment, int dirID);
 void terminate();
+void clear();
 
 int searchDirectory(char *directoryBuffer, char *name);
 void scanDirectory(int dirID, File* fileInfo, int* fileNum);
@@ -52,6 +54,8 @@ void killProcess(int id);
 
 // Handle timer interrupt
 void handleTimerInterrupt(int segment, int sp);
+
+void shellWait(int process);
 
 
 // Utilities
@@ -106,6 +110,7 @@ int main() {
   for (i = 0; i < PROC_ENTRY_NUM; i++) {
     procTable[i].active = 0;
     procTable[i].sp = 0xFF00;
+    procTable[i].waiting = 0;
   }
   curProcKernel = 0;
 
@@ -146,6 +151,10 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     scanDirectory(bx, cx, dx);
   } else if (ax == 10) {
     killProcess(bx);
+  } else if (ax == 11) {
+    shellWait(runProgram(bx, cx, ROOT_SECTOR));
+  } else if (ax == 12) {
+    clear();
   } else {
     char errorMsg[8];
     errorMsg[0] = 'E';
@@ -158,6 +167,31 @@ void handleInterrupt21(int ax, int bx, int cx, int dx) {
     errorMsg[7] = '\0';
     printString(errorMsg);
   }
+}
+
+void clear() {
+  int i;
+  int j;
+  char blankSpace[2];
+
+
+  char al = 0;
+  char bl = 0;
+  char dl = 0;
+  char ah = 0x02;
+  char bh = 0x00;
+  char dh = 0x00;
+  int bx = bh * 256 + bl;
+  int dx = dl * 256 + dh;
+  int ax = ah * 256 + al;
+  
+  blankSpace[0] = '\n';
+  blankSpace[1] = '\0';
+  for(i=0; i<25; i++) {
+    printString(blankSpace);
+  }
+  interrupt(0x10, ax, bx, 0, dx);
+  interrupt(0x10, 0x42 * 256, 0, 0, 0);
 }
 
 
@@ -255,7 +289,7 @@ void readFile(char *filename, char *buffer, int dirID) {
   }
 }
 
-void runProgram(char* name, int segment, int dirID) {
+int runProgram(char* name, int segment, int dirID) {
   char errorMessage[10];
   char number[10];
   char newline[3];
@@ -266,13 +300,15 @@ void runProgram(char* name, int segment, int dirID) {
   readFile(name, programBuffer, ROOT_SECTOR);
 
   setKernelDataSegment();
+
   for (i = 0; i < PROC_ENTRY_NUM; i++) {
-    if(procTable[i].active == 0) {
+    if(procTable[i].active == 0 && procTable[i].waiting == 0) {
       procTable[i].sp = 0xFF00;
       t = i;
       break;
     }
   }
+
   restoreDataSegment();
 
   // convertIntToString(number, t);
@@ -287,7 +323,9 @@ void runProgram(char* name, int segment, int dirID) {
   initializeProgram(segment2);
   setKernelDataSegment();
   procTable[t].active = 1;
+  t = curProcKernel;
   restoreDataSegment();
+  return t;
 }
 
 void killProcess(int id) {
@@ -297,7 +335,7 @@ void killProcess(int id) {
 }
 
 void handleTimerInterrupt(int segment, int sp) {
-  int curProcUser, curProcSegUser, curProcSpUser, count;
+  int curProcUser, curProcSegUser, curProcSpUser, count, wait, parentWait;
 
   setKernelDataSegment();
   curProcSegUser = segment;
@@ -309,9 +347,15 @@ void handleTimerInterrupt(int segment, int sp) {
   }
 
   for (count = 0; count <= PROC_ENTRY_NUM; count++) {
-    curProcUser++;
-    if (curProcUser == PROC_ENTRY_NUM) {
-      curProcUser = 0;
+    curProcUser = (curProcUser + 1) % 8;
+
+    wait = procTable[curProcUser].waiting;
+    if(wait != 0) {
+        parentWait = procTable[wait].waiting;
+        if (!procTable[wait].active && !procTable[parentWait].waiting) {
+            procTable[curProcUser].waiting = 0;
+            procTable[curProcUser].active = 1;
+        }
     }
     if (procTable[curProcUser].active == 1) {
       curProcKernel = curProcUser;
@@ -319,10 +363,11 @@ void handleTimerInterrupt(int segment, int sp) {
       curProcSpUser = procTable[curProcKernel].sp;
       break;
     }
-  }
+}
   restoreDataSegment();
   returnFromTimer(curProcSegUser, curProcSpUser);
 }
+
 
 void terminate() {
   // int i;
@@ -570,6 +615,13 @@ void convertIntToString(char* buffer, int n) {
       buffer[0] = '0';
       buffer[1] = '\0';
   }
+}
+
+void shellWait(int process) {
+     setKernelDataSegment();
+     procTable[0].waiting = process;
+     procTable[0].active = 0;
+     restoreDataSegment();
 }
 
 int mod(int a, int b) {

@@ -25,8 +25,10 @@ void writeFile(char* filename, char* buffer, int numberOfSectors);
 void readFile(char *filename, char *buffer);
 void deleteFile(char* filename);
 void executeFile(char* filename);
+void execforeground(char* filename);
 void kill(int id);
-void exit();
+void terminate();
+void clear();
 
 
 // helper methods
@@ -64,7 +66,7 @@ int main() {
     printString(newLine);
     handleInput(buffer);
     printString(newLine);
-    // exit();
+    // terminate();
   }
 }
 
@@ -83,6 +85,9 @@ void handleInput(char *input) {
   char commandDir[4];
   char badCommand[13];
   char commandCd[3];
+  char commandQuit[5];  
+  char commandClear[6];
+  char commandExeforeground[15];
   int pointer = 0;
 
   commandType[0] = 't';
@@ -146,6 +151,35 @@ void handleInput(char *input) {
   commandCd[1] = 'd';
   commandCd[2] = '\0';
 
+  commandQuit[0] = 'q';
+  commandQuit[1] = 'u';
+  commandQuit[2] = 'i';
+  commandQuit[3] = 't';
+  commandQuit[4] = '\0';
+
+  commandClear[0] = 'c';
+  commandClear[1] = 'l';
+  commandClear[2] = 'e';
+  commandClear[3] = 'a';
+  commandClear[4] = 'r';
+  commandClear[5] = '\0';
+
+  commandExeforeground[0] = 'e';
+  commandExeforeground[1] = 'x';
+  commandExeforeground[2] = 'e';
+  commandExeforeground[3] = 'c';
+  commandExeforeground[4] = 'f';
+  commandExeforeground[5] = 'o';
+  commandExeforeground[6] = 'r';
+  commandExeforeground[7] = 'e';
+  commandExeforeground[8] = 'g';
+  commandExeforeground[9] = 'r';
+  commandExeforeground[10] = 'o';
+  commandExeforeground[11] = 'u';
+  commandExeforeground[12] = 'n';
+  commandExeforeground[13] = 'd';
+  commandExeforeground[14] = '\0';
+
   while (*input != ' ' && *input != '\r' && *input != '\n' && *input != '\0') {
     commandName[pointer] = *input;
     input++;
@@ -176,6 +210,12 @@ void handleInput(char *input) {
     touch(commandArg); // create file
   } else if (compareStr(commandName, commandKill) == 1) {
     kill((int) commandArg[0] - 48);// kill process
+  } else if (compareStr(commandName, commandQuit) == 1) {
+    terminate();
+  } else if (compareStr(commandName, commandClear) == 1) {
+    clear();
+  } else if (compareStr(commandName, commandExeforeground) == 1) {
+    execforeground(commandArg);
   } else if (compareStr(commandName, commandCopy) == 1) {
     char arg1[512];
     char arg2[512];
@@ -413,12 +453,19 @@ void executeFile(char* filename) { // make a sys call to kernel
   interrupt(0x21, 4, filename, 0x2000, 0); // execute file at 0x2000 segment
 }
 
+void execforeground(char* filename) { // make a sys call to kernel
+  interrupt(0x21, 11, filename, 0x2000, 0); // execute file at 0x2000 segment
+}
 
 // ----------- Process control
 void kill(int id) {
   interrupt(0x21, 10, id, 0, 0);
 }
 
-void exit() { // make a sys call to kernel 
+void terminate() { // make a sys call to kernel 
   interrupt(0x21, 5, 0, 0, 0); // exit, then the kernel will reload the shell
 }
+
+void clear() {
+  interrupt(0x21, 12, 0, 0, 0); 
+} 
