@@ -1,4 +1,18 @@
-all: bootload kernel shell loadFile load
+load: loadFile bootload kernel shell static
+	dd if=/dev/zero of=floppya.img bs=512 count=2880
+	dd if=bootload of=floppya.img bs=512 conv=notrunc count=1
+	dd if=message.txt of=floppya.img bs=512 count=1 seek=30 conv=notrunc
+	dd if=kernel of=floppya.img bs=512 conv=notrunc seek=3
+	dd if=map.img of=floppya.img bs=512 count=1 seek=1 conv=notrunc
+	dd if=dir.img of=floppya.img bs=512 count=1 seek=2 conv=notrunc
+	./loadFile message.txt
+	./loadFile help.txt
+	./loadFile tstprg
+	./loadFile tstpr2
+	./loadFile shell
+	./loadFile phello
+
+static: map.img dir.img message.txt
 
 kernel.o: kernel.c
 	bcc -ansi -c kernel.c -o kernel.o
@@ -26,20 +40,6 @@ bootload: bootload.asm
 
 clean:
 	rm -rf *.o kernel bootload shell loadFile floppya.img bochsout.txt
-
-load:
-	dd if=/dev/zero of=floppya.img bs=512 count=2880
-	dd if=bootload of=floppya.img bs=512 conv=notrunc count=1
-	dd if=message.txt of=floppya.img bs=512 count=1 seek=30 conv=notrunc
-	dd if=kernel of=floppya.img bs=512 conv=notrunc seek=3
-	dd if=map.img of=floppya.img bs=512 count=1 seek=1 conv=notrunc
-	dd if=dir.img of=floppya.img bs=512 count=1 seek=2 conv=notrunc
-	./loadFile message.txt
-	./loadFile help.txt
-	./loadFile tstprg
-	./loadFile tstpr2
-	./loadFile shell
-	./loadFile phello
 
 run:
 	bochs -f opsys.bxrc
