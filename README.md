@@ -9,13 +9,11 @@ After you have all the components built, you can use `make run` to run the progr
 
 Alternatively, you can build each component one at a time as well.
 
-<ul>
- <li> make bootload -- create bootload </li>
- <li> make kernel -- crate kernel </li>
- <li> make loadFile -- create loadFile </li>
- <li> make shell -- create shell </li>
- <li> make load -- load files into floppya.img </li>
-</ul>
+* make bootload -- create bootload </li>
+* make kernel -- crate kernel </li>
+* make loadFile -- create loadFile </li>
+* make shell -- create shell </li>
+* make load -- load files into floppya.img </li>
 
 After you finish testing, you can run
 * make clean -- cleans assembly and object files
