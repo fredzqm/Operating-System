@@ -74,7 +74,7 @@ Now do the following:
 
 
 ## Milestone 5
-Added multiprocessing functionality to the current OS. We also implemented Process Blocking and Management. We also added special features like quit, clear, ps, help, print size of dir, cat, and rm.
+Added multiprocessing functionality to the current OS. We also implemented Process Blocking and Management. We also added special features like `quit`, `clear`, `ps`, `help`, `cat`, `rm` and print size of dir.
 
 # Troubleshooting
 1. Check if buffer size is appropriate
