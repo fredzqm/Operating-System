@@ -1,7 +1,8 @@
 Team-2D
 Team members: tandoni yangr zhangq2 zhangx2
 
-========= Usage =========
+# Usage
+
 Executables files can be built with the make command.
 make -- creates everything, and loads into floppya.img
 After you have all the components built, you can use "make run" to run the program. So the commands to enter are "make", followed by "make run".
@@ -16,8 +17,9 @@ make load -- load files into floppya.img
 After you finish testing, you can run
 make clean -- cleans assembly and object files
 
-========= What we did =========
---------- Milestone 3 ---------
+# What we did
+
+## Milestone 3
 Here's what we did for Milestone 3:
   * Added the following functionality in kernel.c:
     void readFile(char *filename, char *buffer);
@@ -37,7 +39,7 @@ Now do the following:
   * Input "execute tstpr2" and it should execute the tstpr2
   * Input "execute tstprg" and it should execute the tstprg and never exit
 
---------- Milestone 4 ---------
+## Milestone 4
 Here's what we did for Milestone 4:
   * Added the following functionality in kernel.c:
     void writeFile(char* name, char* buffer, int numberOfSectors);
@@ -63,10 +65,10 @@ Now do the following:
     Now input "dir", you should see a file named `s` that has the same number of sectors as `shell` has.
 
 
---------- Milestone 5 ---------
+## Milestone 5
 Added multiprocessing functionality to the current OS. We also implemented Process Blocking and Management. We also added special features like quit, clear, ps, help, print size of dir, cat, and rm.
 
-========= Troubleshooting =========
+# Troubleshooting
 1. Check if buffer size is appropriate
 2. Check if index is off by 1, or index never increments
 3. Check if floppya.img is changed
